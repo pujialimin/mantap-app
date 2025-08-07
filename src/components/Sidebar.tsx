@@ -48,7 +48,7 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
       {!isCollapsed && (
         <div className="flex flex-col items-center">
           <img
-            src="/logo.png" // Ganti dengan path file gambar kamu
+            src="/putih.png" // Ganti dengan path file gambar kamu
             alt="App Logo"
             className="w-150 h-15" // Ukuran logo (bisa disesuaikan)
           />
