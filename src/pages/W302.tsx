@@ -134,11 +134,7 @@ const timeOptions = [
   '10.00 PM',
 ];
 const managerOptions = [
-  '523974 / BAMBANG SUTISNO',
-  '530277 / ZAKI ABDURAHMAN',
-  '524757 / DADANG NURZAMAN',
   '532889 / PURWANTO',
-  '580126 / SLAMET KUSWANDI',
 ];
 
 const columnWidths: Record<string, string> = {
