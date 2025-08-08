@@ -41,14 +41,17 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
 
   return (
     <div
-      className={`${
-        isCollapsed ? 'w-16' : 'w-48'
-      } bg-gradient-to-t from-[#00838F] to-[#00838F] text-white h-screen p-4 space-y-4 fixed transition-all duration-300 overflow-y-auto`}
+      className={`
+    ${isCollapsed ? 'w-0 overflow-hidden p-0' : 'w-44 p-2'}
+    bg-gradient-to-t from-[#00838F] to-[#00838F]
+    text-white h-screen space-y-2 fixed
+    transition-all duration-300 overflow-y-auto text-sm
+  `}
     >
       {!isCollapsed && (
         <div className="flex flex-col items-center">
           <img
-            src="/putih.png" // Ganti dengan path file gambar kamu
+            src="/public/logo.png" // Ganti dengan path file gambar kamu
             alt="App Logo"
             className="w-150 h-15" // Ukuran logo (bisa disesuaikan)
           />
@@ -71,7 +74,7 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
                 {!isCollapsed && (
                   <>
                     <span>{item.label}</span>
-                    <span className="ml-auto text-xs">
+                    <span className="ml-auto text-sm">
                       {(
                         item.label === 'Daily Report'
                           ? isReportExpanded
