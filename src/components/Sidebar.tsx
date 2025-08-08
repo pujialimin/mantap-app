@@ -81,7 +81,7 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
     >
       {!isCollapsed && (
         <div className="flex flex-col items-center">
-          <img src="/public/logo.png" alt="App Logo" className="w-150 h-15" />
+          <img src="/putih.png" alt="App Logo" className="w-150 h-15" />
         </div>
       )}
 
