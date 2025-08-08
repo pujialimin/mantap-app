@@ -83,7 +83,7 @@ function MainLayout() {
       <Sidebar isCollapsed={isCollapsed} />
       <div
         className={`transition-all duration-300 h-full bg-gray-100 w-full ${
-          isCollapsed ? 'ml-16' : 'ml-44'
+          isCollapsed ? 'ml-0' : 'ml-44'
         }`}
       >
         {/* Header */}
