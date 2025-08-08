@@ -27,16 +27,48 @@ import { supabase } from './supabaseClient'; // ⬅️ pastikan sudah diimpor
 import { useNavigate } from 'react-router-dom'; // ⬅️ untuk redirect setelah logout
 import { useState, useEffect } from 'react';
 import { AuthProvider } from './context/AuthContext';
+import { useRef } from 'react';
 
 function MainLayout() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate(); // untuk redirect setelah logout
+  const navigate = useNavigate();
+  const idleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/login');
   };
 
+  // 🕒 Fungsi reset idle timer
+  const resetIdleTimer = () => {
+    if (idleTimeoutRef.current) clearTimeout(idleTimeoutRef.current);
+    idleTimeoutRef.current = setTimeout(() => {
+      handleLogout();
+    }, 1 * 60 * 1000); // 30 menit
+  };
+
+  useEffect(() => {
+    // Cek jika tidak ada session, arahkan ke login
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) navigate('/login', { replace: true });
+    });
+
+    // 🟡 Tambahkan event listener untuk aktifitas user
+    const events = ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll'];
+    events.forEach((event) => window.addEventListener(event, resetIdleTimer));
+
+    // 🟢 Set idle timer awal
+    resetIdleTimer();
+
+    // 🧹 Cleanup saat unmount
+    return () => {
+      if (idleTimeoutRef.current) clearTimeout(idleTimeoutRef.current);
+      events.forEach((event) => window.removeEventListener(event, resetIdleTimer));
+    };
+  }, []);
+
+  
   const getTitle = () => {
     switch (location.pathname) {
       case '/dashboard':
