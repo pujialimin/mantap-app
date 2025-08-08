@@ -148,7 +148,7 @@ const [rows, setRows] = useState<Row[]>([]);
   
     const requiredKeys = ['ac_reg', 'order', 'description', 'plntwkcntr', 'doc_type', 'doc_status'];
   
-    // Cek validasi wajib isi jika salah satu dari kolom penting terisi
+    // Validasi form: semua kolom wajib jika salah satu terisi
     for (let i = 0; i < forms.length; i++) {
       const row = forms[i];
       const isAnyFilled = requiredKeys.some((key) => (row[key] || '').trim() !== '');
@@ -161,29 +161,66 @@ const [rows, setRows] = useState<Row[]>([]);
       }
     }
   
-    // Filter hanya baris yang lengkap (semua requiredKey terisi)
-    const dataToInsert = forms
-      .filter((row) =>
-        requiredKeys.every((key) => (row[key] || '').trim() !== '')
-      )
+    // Ambil hanya baris yang lengkap
+    const filledRows = forms.filter((row) =>
+      requiredKeys.every((key) => (row[key] || '').trim() !== '')
+    );
+  
+    // Ambil semua order yang ingin dicek
+    const ordersToCheck = filledRows.map((row) => row.order);
+  
+    // Cek ke Supabase apakah order sudah ada
+    const { data: existing, error: checkError } = await supabase
+      .from('mdr_tracking')
+      .select('order')
+      .in('order', ordersToCheck);
+  
+    if (checkError) {
+      setMessage(`❌ Gagal memeriksa order duplikat: ${checkError.message}`);
+      setLoading(false);
+      return;
+    }
+  
+    const existingOrders = new Set((existing || []).map((row) => row.order));
+  
+    const validRows = filledRows
+      .filter((row) => !existingOrders.has(row.order))
       .map((row) => ({
         ...row,
         status_job: getStatusJob(row),
       }));
   
-    // 🛠️ Insert ke Supabase
-    const { error } = await supabase.from('mdr_tracking').insert(dataToInsert);
+    const duplicateRows = filledRows.filter((row) => existingOrders.has(row.order));
   
-    if (error) {
-      console.error('Insert error:', error);
-      setMessage('❌ Gagal menyimpan data.');
+    // Insert hanya yang valid
+    if (validRows.length > 0) {
+      const { error: insertError } = await supabase.from('mdr_tracking').insert(validRows);
+  
+      if (insertError) {
+        console.error('Insert error:', insertError);
+        setMessage('❌ Gagal menyimpan sebagian data.');
+      } else {
+        setMessage(
+          `✅ ${validRows.length} data berhasil disimpan.${
+            duplicateRows.length > 0
+              ? ` ⚠️ ${duplicateRows.length} data duplikat tidak disimpan.`
+              : ''
+          }`
+        );
+      }
     } else {
-      setMessage('✅ Data berhasil disimpan!');
-      setForms([{ ...emptyRow }]); // reset form
+      setMessage('⚠️ Tidak ada data baru yang disimpan. Semua data mungkin duplikat.');
     }
+  
+    // Tampilkan kembali form hanya dengan data yang gagal (duplikat)
+    setForms([
+      ...duplicateRows,
+      { ...emptyRow }, // baris kosong agar tetap bisa lanjut isi
+    ]);
   
     setLoading(false);
   };
+  
   
   
   useEffect(() => {
