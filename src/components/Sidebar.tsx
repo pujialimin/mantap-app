@@ -1,4 +1,3 @@
-// src/components/ui/Sidebar.tsx
 import {
   FaHome,
   FaChartBar,
@@ -15,8 +14,8 @@ const menuItems = [
   { label: 'Home', icon: <FaHome />, path: '/' },
   { label: 'Dashboard', icon: <FaChartBar />, path: '/dashboard' },
   { label: 'Input Data', icon: <FaEdit />, path: '/input' },
-  { label: 'Daily Menu', icon: <FaCalendarAlt />, path: null }, // jadi dropdown
-  { label: 'Daily Report', icon: <FaFileAlt />, path: null }, // jadi dropdown
+  { label: 'Daily Menu', icon: <FaCalendarAlt />, path: null },
+  { label: 'Daily Report', icon: <FaFileAlt />, path: null },
   { label: 'ABMP', icon: <FaCogs />, path: '/abmp' },
 ];
 
@@ -38,27 +37,56 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
   const location = useLocation();
   const [isReportExpanded, setIsReportExpanded] = useState(false);
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
+  const { email } = useAuth();
+
+  // Aturan blokir menu & submenu
+  const blockedMenus: Record<string, string[]> = {
+    'tbr1dashboard@gmail.com': ['Daily Report'], // blokir menu utama Daily Report
+    'pujialiminxii2@gmail.com': ['Daily Report'],
+    'sheetmetalbush4@gmail.com': ['Daily Menu', 'Input Data'],
+    'asmorodoro@gmail.com': ['Daily Menu', 'Input Data'],
+  };
+
+  const blockedSubmenus: Record<string, string[]> = {
+    'tbr1dashboard@gmail.com': [
+      ...dailyReportSubmenu.map((sub) => sub.label),
+      'TBR WS1',
+    ],
+    'pujialiminxii2@gmail.com': [
+      ...dailyReportSubmenu.map((sub) => sub.label),
+      'TBR BUSH4',
+    ],
+
+    'sheetmetalbush4@gmail.com': ['W301', 'W302', 'W303', 'W305'],
+    'asmorodoro@gmail.com': ['W301', 'W302', 'W303', 'W304'],
+  };
+
+  // Filter menu utama
+  const filteredMenuItems = menuItems.filter(
+    (item) => !blockedMenus[email]?.includes(item.label)
+  );
+
+  // Filter submenu
+  const filterSubmenu = (submenu: { label: string; path: string }[]) =>
+    submenu.filter((sub) => !blockedSubmenus[email]?.includes(sub.label));
 
   return (
     <div
       className={`
-    ${isCollapsed ? 'w-0 overflow-hidden p-0' : 'w-44 p-2'}
-    bg-gradient-to-t from-[#00838F] to-[#00838F]
-    text-white h-screen space-y-2 fixed
-    transition-all duration-300 overflow-y-auto text-sm
-  `}
+        ${isCollapsed ? 'w-0 overflow-hidden p-0' : 'w-44 p-2'}
+        bg-gradient-to-t from-[#00838F] to-[#00838F]
+        text-white h-screen space-y-2 fixed
+        transition-all duration-300 overflow-y-auto text-sm
+      `}
     >
       {!isCollapsed && (
         <div className="flex flex-col items-center">
-          <img
-            src="/putih.png" // Ganti dengan path file gambar kamu
-            alt="App Logo"
-            className="w-150 h-15" // Ukuran logo (bisa disesuaikan)
-          />
+          <img src="/public/logo.png" alt="App Logo" className="w-150 h-15" />
         </div>
       )}
+
       <ul className="space-y-2">
-        {menuItems.map((item) => (
+        {filteredMenuItems.map((item) => (
           <li key={item.label}>
             {/* Dropdown menu check */}
             {item.label === 'Daily Report' || item.label === 'Daily Menu' ? (
@@ -103,7 +131,7 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
               item.label === 'Daily Report' &&
               isReportExpanded && (
                 <ul className="ml-6 mt-0 space-y-1 text-xs">
-                  {dailyReportSubmenu.map((sub) => (
+                  {filterSubmenu(dailyReportSubmenu).map((sub) => (
                     <li key={sub.label}>
                       <Link
                         to={sub.path}
@@ -121,7 +149,7 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
             {/* Daily Menu Submenu */}
             {!isCollapsed && item.label === 'Daily Menu' && isMenuExpanded && (
               <ul className="ml-6 mt-1 space-y-1 text-xs">
-                {dailyMenuSubmenu.map((sub) => (
+                {filterSubmenu(dailyMenuSubmenu).map((sub) => (
                   <li key={sub.label}>
                     <Link
                       to={sub.path}
