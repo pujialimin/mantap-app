@@ -141,6 +141,8 @@ const [rows, setRows] = useState<Row[]>([]);
     setForms((prev) => [...prev, ...newRows]);
   };
 
+  
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -148,7 +150,7 @@ const [rows, setRows] = useState<Row[]>([]);
   
     const requiredKeys = ['ac_reg', 'order', 'description', 'plntwkcntr', 'doc_type', 'doc_status'];
   
-    // Validasi form: semua kolom wajib jika salah satu terisi
+    // Validasi
     for (let i = 0; i < forms.length; i++) {
       const row = forms[i];
       const isAnyFilled = requiredKeys.some((key) => (row[key] || '').trim() !== '');
@@ -161,65 +163,64 @@ const [rows, setRows] = useState<Row[]>([]);
       }
     }
   
-    // Ambil hanya baris yang lengkap
-    const filledRows = forms.filter((row) =>
-      requiredKeys.every((key) => (row[key] || '').trim() !== '')
-    );
+    const dataToInsert = forms
+      .filter((row) => requiredKeys.every((key) => (row[key] || '').trim() !== ''))
+      .map((row) => ({ ...row, status_job: getStatusJob(row) }));
   
-    // Ambil semua order yang ingin dicek
-    const ordersToCheck = filledRows.map((row) => row.order);
+    if (dataToInsert.length === 0) {
+      setMessage('❌ Tidak ada data yang valid untuk disimpan.');
+      setLoading(false);
+      return;
+    }
   
-    // Cek ke Supabase apakah order sudah ada
-    const { data: existing, error: checkError } = await supabase
-      .from('mdr_tracking')
-      .select('order')
-      .in('order', ordersToCheck);
+    // ✅ Cek order duplikat di database (gunakan .or() karena kolom bertipe text)
+    const orderList = dataToInsert.map((row) => String(row.order).trim());
+    const orFilter = orderList.map((o) => `order.eq.${o}`).join(',');
+  
+    let existingOrders: any[] = [];
+    let checkError = null;
+  
+    if (orderList.length > 0) {
+      const { data, error } = await supabase
+        .from('mdr_tracking')
+        .select('order')
+        .or(orFilter);
+      existingOrders = data || [];
+      checkError = error;
+    }
   
     if (checkError) {
+      console.error('Gagal memeriksa order duplikat:', checkError);
       setMessage(`❌ Gagal memeriksa order duplikat: ${checkError.message}`);
       setLoading(false);
       return;
     }
   
-    const existingOrders = new Set((existing || []).map((row) => row.order));
+    const existingOrderSet = new Set(existingOrders.map((item) => item.order));
+    const finalDataToInsert = dataToInsert.filter((row) => !existingOrderSet.has(String(row.order)));
+    const duplicatedData = dataToInsert.filter((row) => existingOrderSet.has(String(row.order)));
   
-    const validRows = filledRows
-      .filter((row) => !existingOrders.has(row.order))
-      .map((row) => ({
-        ...row,
-        status_job: getStatusJob(row),
-      }));
-  
-    const duplicateRows = filledRows.filter((row) => existingOrders.has(row.order));
-  
-    // Insert hanya yang valid
-    if (validRows.length > 0) {
-      const { error: insertError } = await supabase.from('mdr_tracking').insert(validRows);
-  
-      if (insertError) {
-        console.error('Insert error:', insertError);
-        setMessage('❌ Gagal menyimpan sebagian data.');
-      } else {
-        setMessage(
-          `✅ ${validRows.length} data berhasil disimpan.${
-            duplicateRows.length > 0
-              ? ` ⚠️ ${duplicateRows.length} data duplikat tidak disimpan.`
-              : ''
-          }`
-        );
-      }
-    } else {
-      setMessage('⚠️ Tidak ada data baru yang disimpan. Semua data mungkin duplikat.');
+    if (finalDataToInsert.length === 0) {
+      setMessage('❌ Semua order sudah ada di database. Tidak ada yang disimpan.');
+      setLoading(false);
+      return;
     }
   
-    // Tampilkan kembali form hanya dengan data yang gagal (duplikat)
-    setForms([
-      ...duplicateRows,
-      { ...emptyRow }, // baris kosong agar tetap bisa lanjut isi
-    ]);
+    const { error: insertError } = await supabase.from('mdr_tracking').insert(finalDataToInsert);
+  
+    if (insertError) {
+      console.error('Insert error:', insertError);
+      setMessage('❌ Gagal menyimpan data.');
+    } else {
+      setMessage(`✅ ${finalDataToInsert.length} data berhasil disimpan.${duplicatedData.length > 0 ? ` ${duplicatedData.length} order duplikat tidak disimpan.` : ''}`);
+  
+      const newForms = duplicatedData.length > 0 ? duplicatedData : [{ ...emptyRow }];
+      setForms(newForms);
+    }
   
     setLoading(false);
   };
+  
   
   
   
