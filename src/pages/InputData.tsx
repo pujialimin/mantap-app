@@ -46,7 +46,7 @@ const getStatusPE = (doc_status: string): string => {
     '🔘ROBBING',
   ];
 
-  if (doc_status === '🔴NEED RO' || '🔴WAIT.REMOVE' ) return 'OPEN';
+  if (['🔴NEED RO', '🔴WAIT.REMOVE'].includes(doc_status)) return 'OPEN';
   if (progressStatus.includes(doc_status)) return 'PROGRESS';
   if (closedStatus.includes(doc_status)) return 'CLOSED';
   return '';
