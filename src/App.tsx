@@ -45,7 +45,7 @@ function MainLayout() {
     if (idleTimeoutRef.current) clearTimeout(idleTimeoutRef.current);
     idleTimeoutRef.current = setTimeout(() => {
       handleLogout();
-    }, 1 * 60 * 1000); // 30 menit
+    }, 30 * 60 * 1000); // 30 menit
   };
 
   useEffect(() => {
