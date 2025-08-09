@@ -227,7 +227,7 @@ export default function W304() {
   const pdfLinkRef = useRef(null);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 12;
+  const rowsPerPage = 100;
 
   const filteredRows = rows.filter((row) => {
     const status = row.status_sm4 || '';

@@ -253,7 +253,7 @@ export default function BUSH4() {
   const [confirmMessage, setConfirmMessage] = useState('');
 
   const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 12;
+  const rowsPerPage = 100;
 
   const confirmAction = (action: () => void) => {
     setPendingAction(() => action);
