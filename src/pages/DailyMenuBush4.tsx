@@ -638,19 +638,23 @@ export default function BUSH4() {
           </div>
 
           <select
-            value={filterAcReg}
-            onChange={(e) => setFilterAcReg(e.target.value)}
-            className="border rounded px-1 py-1 text-xs"
-          >
-            <option value="">All A/C Reg</option>
-            {[...new Set(rows.map((r) => r.ac_reg).filter(Boolean))].map(
-              (reg) => (
-                <option key={reg} value={reg}>
-                  {reg}
-                </option>
-              )
-            )}
-          </select>
+  value={filterAcReg}
+  onChange={(e) => setFilterAcReg(e.target.value)}
+  className="border rounded px-1 py-1 text-xs"
+>
+  {/* Opsi default selalu di atas */}
+  <option value="">All A/C Reg</option>
+
+  {/* Urutkan sisanya */}
+  {[...new Set(rows.map((r) => r.ac_reg).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b))
+    .map((reg) => (
+      <option key={reg} value={reg}>
+        {reg}
+      </option>
+    ))}
+</select>
+
 
           <select
             value={filterDocStatus}
