@@ -41,24 +41,31 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
 
   // Aturan blokir menu & submenu
   const blockedMenus: Record<string, string[]> = {
-    'tbr1dashboard@gmail.com': ['Daily Report'], // blokir menu utama Daily Report
-    'pujialiminxii2@gmail.com': ['Daily Report'],
-    'sheetmetalbush4@gmail.com': ['Daily Menu', 'Input Data'],
-    'asmorodoro@gmail.com': ['Daily Menu', 'Input Data'],
+    'tbr1dashboard@gmail.com': ['Daily Report', 'Daily Menu', 'Input Data'],// PO/CUSTOMER
+    'tbr.narrowbody@gmail.com': ['Daily Report'], // PE BUSH4
+    'tbr.structureshop@gmail.com': ['Daily Report'], // PE WS1
+    'sheetmetalbush4@gmail.com': ['Daily Menu', 'Input Data'], // SM BUSH4
+    'asmorodoro@gmail.com': ['Daily Menu', 'Input Data'], // COMP BUSH4
+    'tbr6composite.garuda@gmail.com': ['Daily Menu', 'Input Data'], // COMP BUSH4
+    
   };
 
   const blockedSubmenus: Record<string, string[]> = {
-    'tbr1dashboard@gmail.com': [
+    'tbr.narrowbody@gmail.com': [
       ...dailyReportSubmenu.map((sub) => sub.label),
       'TBR WS1',
-    ],
-    'pujialiminxii2@gmail.com': [
+    ],  // PE BUSH4
+    'tbr.structureshop@gmail.com': [
       ...dailyReportSubmenu.map((sub) => sub.label),
       'TBR BUSH4',
-    ],
+    ],  // PE WS1
 
-    'sheetmetalbush4@gmail.com': ['W301', 'W302', 'W303', 'W305'],
-    'asmorodoro@gmail.com': ['W301', 'W302', 'W303', 'W304'],
+    'sheetmetalbush4@gmail.com': ['W301', 'W302', 'W303', 'W305'], // SM BUSH4
+    'asmorodoro@gmail.com': ['W301', 'W302', 'W303', 'W304'], // COMP BUSH4
+    'tbr6composite.garuda@gmail.com': ['W301', 'W302', 'W303', 'W304'], // COMP BUSH4
+ 
+ 
+ 
   };
 
   // Filter menu utama
