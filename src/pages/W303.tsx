@@ -139,7 +139,7 @@ const columnWidths: Record<string, string> = {
   date_in: 'min-w-[0px]',
   doc_status: 'min-w-[100px]',
   status_mw: 'min-w-[90px]',
-  remark_mw: 'min-w-[150px]',
+  remark_mw: 'min-w-[250px]',
   handle_by_mw: 'min-w-[90px]',
   date_closed_mw: 'min-w-[00px]',
   report_mw: 'min-w-[0px]',
