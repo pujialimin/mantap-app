@@ -143,7 +143,14 @@ const STATUS_COLUMNS = [
   'other',
 ];
 
-const getStatusPE = (doc_status: string): string => {
+const getStatusPE = (
+  doc_status: string,
+  status_sm1?: string,
+  status_sm4?: string,
+  status_cs1?: string,
+  status_cs4?: string,
+  status_mw?: string
+): string => {
   const openStatuses = ['🔴NEED RO', '🔴WAIT.REMOVE'];
   const progressStatuses = [
     '🟡RO DONE',
@@ -166,10 +173,27 @@ const getStatusPE = (doc_status: string): string => {
   ];
 
   if (openStatuses.includes(doc_status)) return 'OPEN';
-  if (progressStatuses.includes(doc_status)) return 'PROGRESS';
+
+  if (progressStatuses.includes(doc_status)) {
+    if (doc_status === '🟡RO DONE') {
+      const statuses = [
+        status_sm1,
+        status_sm4,
+        status_cs1,
+        status_cs4,
+        status_mw,
+      ];
+      const allEmpty = statuses.every((s) => !s || s.trim() === '');
+      return allEmpty ? 'OPEN' : 'PROGRESS';
+    }
+    return 'PROGRESS';
+  }
+
   if (closedStatuses.includes(doc_status)) return 'CLOSED';
+
   return '';
 };
+
 
 const formatDateToDDMMMYYYY = (date: Date): string => {
   const day = date.getDate().toString().padStart(2, '0');
@@ -239,6 +263,8 @@ export default function BUSH4() {
   const [filterAcReg, setFilterAcReg] = useState('');
   const [filterOrder, setFilterOrder] = useState('');
   const [filterDocStatus, setFilterDocStatus] = useState('');
+  const [filterStatusJob, setFilterStatusJob] = useState('');
+
   const [sortKey, setSortKey] = useState('');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
@@ -438,7 +464,7 @@ export default function BUSH4() {
         ? (value as Record<string, any>)
         : { [keyOrBulk]: value };
 
-    // Otomatis isi date_out jika loc_doc
+    // 🔹 Auto isi date_out jika loc_doc berubah
     if (keyOrBulk === 'loc_doc') {
       const today = new Date();
       const yyyy = today.getFullYear();
@@ -447,7 +473,7 @@ export default function BUSH4() {
       updates['date_out'] = `${yyyy}-${mm}-${dd}`;
     }
 
-    // Otomatis isi date_closed jika status_XXX menjadi CLOSED
+    // 🔹 Auto isi date_closed jika status_xxx jadi CLOSED
     if (
       keyOrBulk !== 'bulk' &&
       keyOrBulk.startsWith('status_') &&
@@ -457,33 +483,63 @@ export default function BUSH4() {
       updates[`date_closed_${suffix}`] = formatDateToDDMMMYYYY(new Date());
     }
 
-    // Hitung ulang status_job jika kolom memengaruhi
-    const keys = Object.keys(updates);
-    const affectsStatusJob = keys.some((k) =>
-      [
-        'status_pe',
-        'status_sm4',
-        'status_sm1',
-        'status_cs4',
-        'status_cs1',
-        'status_mw',
-        'nd',
-        'tjo',
-        'other',
-        'cek_sm4',
-        'cek_sm1',
-        'cek_cs4',
-        'cek_cs1',
-        'cek_mw',
-      ].includes(k)
-    );
-
     const currentRow = rows.find((r) => r.id === id);
-    if (affectsStatusJob && currentRow) {
-      const simulatedRow = { ...currentRow, ...updates };
-      updates['status_job'] = getStatusJob(simulatedRow);
+    if (currentRow) {
+      // gabungkan row lama + update baru → simulatedRow
+      let simulatedRow = { ...currentRow, ...updates };
+
+      // 🔹 Step 1: Recalculate status_pe kalau perlu
+      const keys = Object.keys(updates);
+      const affectsStatusPE = keys.some((k) =>
+        [
+          'doc_status',
+          'status_sm1',
+          'status_sm4',
+          'status_cs1',
+          'status_cs4',
+          'status_mw',
+        ].includes(k)
+      );
+
+      if (affectsStatusPE) {
+        updates['status_pe'] = getStatusPE(
+          simulatedRow.doc_status,
+          simulatedRow.status_sm1,
+          simulatedRow.status_sm4,
+          simulatedRow.status_cs1,
+          simulatedRow.status_cs4,
+          simulatedRow.status_mw
+        );
+        simulatedRow = { ...simulatedRow, status_pe: updates['status_pe'] };
+      }
+
+      // 🔹 Step 2: Recalculate status_job selalu jika status_pe berubah
+      const affectsStatusJob =
+        affectsStatusPE ||
+        keys.some((k) =>
+          [
+            'status_sm1',
+            'status_sm4',
+            'status_cs1',
+            'status_cs4',
+            'status_mw',
+            'nd',
+            'tjo',
+            'other',
+            'cek_sm4',
+            'cek_sm1',
+            'cek_cs4',
+            'cek_cs1',
+            'cek_mw',
+          ].includes(k)
+        );
+
+      if (affectsStatusJob) {
+        updates['status_job'] = getStatusJob(simulatedRow);
+      }
     }
 
+    // 🔹 Update ke Supabase
     const { error } = await supabase
       .from('mdr_tracking')
       .update(updates)
@@ -498,26 +554,37 @@ export default function BUSH4() {
     }
   };
 
+
   const filteredRows = rows
-    .filter((row) => {
-      if (showOnlyChecked && !selectedRows.includes(row.id)) return false;
+  .filter((row) => {
+    if (showOnlyChecked && !selectedRows.includes(row.id)) return false;
+  
+    const matchesSearch = Object.values(row)
+      .join(' ')
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+  
+    const matchesAcReg = filterAcReg === '' || row.ac_reg === filterAcReg;
+    const matchesDocStatus =
+      filterDocStatus === '' || row.doc_status === filterDocStatus;
+    const matchesStatusJob =
+      filterStatusJob === '' || row.status_job === filterStatusJob;
+    const matchesPlntwkcntr = FILTERED_PLNTWKCNTR.includes(
+      (row.plntwkcntr || '').toUpperCase()
+    );
+  
+    return (
+      matchesSearch &&
+      matchesAcReg &&
+      matchesDocStatus &&
+      matchesStatusJob &&
+      matchesPlntwkcntr
+    );
+  })
+  
 
-      const matchesSearch = Object.values(row)
-        .join(' ')
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
 
-      const matchesAcReg = filterAcReg === '' || row.ac_reg === filterAcReg;
-      const matchesDocStatus =
-        filterDocStatus === '' || row.doc_status === filterDocStatus;
-      const matchesPlntwkcntr = FILTERED_PLNTWKCNTR.includes(
-        (row.plntwkcntr || '').toUpperCase()
-      );
 
-      return (
-        matchesSearch && matchesAcReg && matchesDocStatus && matchesPlntwkcntr
-      );
-    })
     .sort((a, b) => {
       if (!sortKey) return 0;
 
@@ -589,7 +656,7 @@ export default function BUSH4() {
 
           <button
             onClick={() => setShowOnlyChecked((prev) => !prev)}
-            className="inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-1.5 py-1 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50"
+            className="inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-1.5 py-1 bg-white text-[11px] font-medium text-gray-700 hover:bg-gray-50"
           >
             {showOnlyChecked ? 'Checked Row' : 'All Row'}
           </button>
@@ -599,14 +666,14 @@ export default function BUSH4() {
             <div className="relative inline-block text-left ml-0">
               <button
                 onClick={() => setShowMenu(!showMenu)}
-                className="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-1.5 py-1 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50"
+                className="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-1.5 py-1 bg-white text-[11px] font-medium text-gray-700 hover:bg-gray-50"
               >
                 ⋮ Actions
               </button>
 
               {showMenu && (
                 <div className="absolute z-50 mt-2 w-28 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
-                  <div className="py-0 text-xs">
+                  <div className="py-0 text-[11px]">
                     <button
                       onClick={() => handleAction('copy')}
                       className="block w-full text-left px-2 py-1 hover:bg-gray-100"
@@ -640,7 +707,7 @@ export default function BUSH4() {
           <select
   value={filterAcReg}
   onChange={(e) => setFilterAcReg(e.target.value)}
-  className="border rounded px-1 py-1 text-xs"
+  className="border rounded px-1 py-1 text-[11px]"
 >
   {/* Opsi default selalu di atas */}
   <option value="">All A/C Reg</option>
@@ -659,7 +726,7 @@ export default function BUSH4() {
           <select
             value={filterDocStatus}
             onChange={(e) => setFilterDocStatus(e.target.value)}
-            className="border rounded px-1 py-1 text-xs"
+            className="border rounded px-1 py-1 text-[11px]"
           >
             <option value="">All Doc Status</option>
             {DOC_STATUS_OPTIONS.map((status) => (
@@ -669,11 +736,23 @@ export default function BUSH4() {
             ))}
           </select>
 
+          <select
+  value={filterStatusJob}
+  onChange={(e) => setFilterStatusJob(e.target.value)}
+  className="border rounded px-1 py-1 text-[11px]"
+>
+  <option value="">All Status Job</option>
+  <option value="OPEN">OPEN</option>
+  <option value="PROGRESS">PROGRESS</option>
+  <option value="CLOSED">CLOSED</option>
+</select>
+
+
           {/* Sort By */}
           <select
             value={sortKey}
             onChange={(e) => setSortKey(e.target.value)}
-            className="border rounded px-1 py-1 text-xs"
+            className="border rounded px-1 py-1 text-[11px]"
           >
             <option value="">Sort by...</option>
             {sortOptions.map((option) => (
@@ -687,7 +766,7 @@ export default function BUSH4() {
           <select
             value={sortDirection}
             onChange={(e) => setSortDirection(e.target.value as 'asc' | 'desc')}
-            className="border rounded px-1 py-1 text-xs"
+            className="border rounded px-1 py-1 text-[11px]"
           >
             <option value="asc">A-Z</option>
             <option value="desc">Z-A</option>
