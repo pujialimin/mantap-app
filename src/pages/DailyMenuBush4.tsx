@@ -628,7 +628,7 @@ export default function BUSH4() {
         <div className="mb-2 flex flex-wrap gap-1 items-center">
           <div className="flex items-center ml-0">
             <span className="text-xs font-medium"></span>
-            <label className="relative inline-flex items-center cursor-pointer select-none w-12 h-6">
+            <label className="relative inline-flex items-center cursor-pointer select-none w-11 h-5">
               <input
                 type="checkbox"
                 checked={showCheckboxColumn}
@@ -636,7 +636,7 @@ export default function BUSH4() {
                 className="sr-only peer"
               />
               <div className="w-full h-full bg-gray-300 rounded-full peer-checked:bg-blue-600 transition-colors duration-200" />
-              <div className="absolute top-0.5 left-0.5 w-5 h-5 bg-white border border-gray-300 rounded-full transition-transform duration-200 peer-checked:translate-x-[24px]" />
+              <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white border border-gray-300 rounded-full transition-transform duration-200 peer-checked:translate-x-[24px]" />
               <span className="absolute left-1 top-1/2 -translate-y-1/2 text-[10px] text-white font-semibold opacity-0 peer-checked:opacity-100 transition-opacity duration-200">
                 ON
               </span>
