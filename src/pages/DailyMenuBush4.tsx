@@ -57,7 +57,7 @@ const columnWidths: Record<string, string> = {
   cek_sm1: 'min-w-[0px]',
   cek_cs1: 'min-w-[0px]',
   cek_mw: 'min-w-[0px]',
-  nd: 'min-w-[0px]',
+  nd: 'min-w-[30px]',
   tjo: 'min-w-[0px]',
   other: 'min-w-[0px]',
   status_job: 'min-w-[00px]',
@@ -79,10 +79,8 @@ const COLUMN_ORDER: { key: string; label: string }[] = [
   { key: 'date_in', label: 'Date In' },
   { key: 'doc_status', label: 'Doc Status' },
 
-  { key: 'status_pe', label: 'status pe' },
   { key: 'cek_sm1', label: 'W301' },
 
-  { key: 'status_sm1', label: 'status_sm1' },
   { key: 'cek_cs1', label: 'W302' },
   { key: 'cek_mw', label: 'W303' },
   { key: 'cek_sm4', label: 'W304' },
