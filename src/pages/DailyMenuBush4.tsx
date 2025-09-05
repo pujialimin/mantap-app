@@ -57,7 +57,7 @@ const columnWidths: Record<string, string> = {
   cek_sm1: 'min-w-[0px]',
   cek_cs1: 'min-w-[0px]',
   cek_mw: 'min-w-[0px]',
-  nd: 'min-w-[30px]',
+  nd: 'min-w-[0px]',
   tjo: 'min-w-[0px]',
   other: 'min-w-[0px]',
   status_job: 'min-w-[00px]',
@@ -80,7 +80,6 @@ const COLUMN_ORDER: { key: string; label: string }[] = [
   { key: 'doc_status', label: 'Doc Status' },
 
   { key: 'cek_sm1', label: 'W301' },
-
   { key: 'cek_cs1', label: 'W302' },
   { key: 'cek_mw', label: 'W303' },
   { key: 'cek_sm4', label: 'W304' },
@@ -195,6 +194,7 @@ const getStatusPE = (
   return '';
 };
 
+
 const formatDateToDDMMMYYYY = (date: Date): string => {
   const day = date.getDate().toString().padStart(2, '0');
   const monthNames = [
@@ -258,11 +258,13 @@ const sortOptions = [
 ];
 
 export default function BUSH4() {
+  const [rows, setRows] = useState<Row[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterAcReg, setFilterAcReg] = useState('');
   const [filterOrder, setFilterOrder] = useState('');
   const [filterDocStatus, setFilterDocStatus] = useState('');
   const [filterStatusJob, setFilterStatusJob] = useState('');
+
   const [sortKey, setSortKey] = useState('');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
@@ -276,12 +278,8 @@ export default function BUSH4() {
   const [showOnlyChecked, setShowOnlyChecked] = useState(false);
   const [confirmMessage, setConfirmMessage] = useState('');
 
-  const [rows, setRows] = useState<any[]>([]);
-  const [totalRows, setTotalRows] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 200;
-
-  const paginatedRows = rows; // kalau pakai server-side pagination
+  const rowsPerPage = 100;
 
   const confirmAction = (action: () => void) => {
     setPendingAction(() => action);
@@ -440,26 +438,21 @@ export default function BUSH4() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const from = (currentPage - 1) * rowsPerPage;
-      const to = from + rowsPerPage - 1;
-
-      const { data, count, error } = await supabase
+      const { data, error } = await supabase
         .from('mdr_tracking')
-        .select('*', { count: 'exact' }) // hitung total baris
+        .select('*')
         .eq('archived', false)
-        .order('date_in', { ascending: false })
-        .range(from, to);
+        .order('date_in', { ascending: false });
 
       if (error) {
         console.error('Error fetching archived data:', error);
       } else {
         setRows(data || []);
-        setTotalRows(count || 0);
       }
     };
 
     fetchData();
-  }, [currentPage]);
+  }, []);
 
   const handleUpdate = async (
     id: string,
@@ -561,32 +554,36 @@ export default function BUSH4() {
     }
   };
 
+
   const filteredRows = rows
-    .filter((row) => {
-      if (showOnlyChecked && !selectedRows.includes(row.id)) return false;
+  .filter((row) => {
+    if (showOnlyChecked && !selectedRows.includes(row.id)) return false;
+  
+    const matchesSearch = Object.values(row)
+      .join(' ')
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+  
+    const matchesAcReg = filterAcReg === '' || row.ac_reg === filterAcReg;
+    const matchesDocStatus =
+      filterDocStatus === '' || row.doc_status === filterDocStatus;
+    const matchesStatusJob =
+      filterStatusJob === '' || row.status_job === filterStatusJob;
+    const matchesPlntwkcntr = FILTERED_PLNTWKCNTR.includes(
+      (row.plntwkcntr || '').toUpperCase()
+    );
+  
+    return (
+      matchesSearch &&
+      matchesAcReg &&
+      matchesDocStatus &&
+      matchesStatusJob &&
+      matchesPlntwkcntr
+    );
+  })
+  
 
-      const matchesSearch = Object.values(row)
-        .join(' ')
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
 
-      const matchesAcReg = filterAcReg === '' || row.ac_reg === filterAcReg;
-      const matchesDocStatus =
-        filterDocStatus === '' || row.doc_status === filterDocStatus;
-      const matchesStatusJob =
-        filterStatusJob === '' || row.status_job === filterStatusJob;
-      const matchesPlntwkcntr = FILTERED_PLNTWKCNTR.includes(
-        (row.plntwkcntr || '').toUpperCase()
-      );
-
-      return (
-        matchesSearch &&
-        matchesAcReg &&
-        matchesDocStatus &&
-        matchesStatusJob &&
-        matchesPlntwkcntr
-      );
-    })
 
     .sort((a, b) => {
       if (!sortKey) return 0;
@@ -619,12 +616,16 @@ export default function BUSH4() {
     );
   };
 
-  const totalPages = Math.ceil(totalRows / rowsPerPage);
+  const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+  const paginatedRows = filteredRows.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
 
   return (
     <div className="bg-gray-100 w-full h-full">
       <div className="bg-white px-3 pt-3 pb-6 max-h-[100vh] overflow-hidden w-full rounded-lg">
-      <div className="mb-2 flex flex-wrap gap-1 items-center">
+        <div className="mb-2 flex flex-wrap gap-1 items-center">
           <div className="flex items-center ml-0">
             <span className="text-xs font-medium"></span>
             <label className="relative inline-flex items-center cursor-pointer select-none w-11 h-5">
@@ -821,14 +822,14 @@ export default function BUSH4() {
                   )}
 
                   {COLUMN_ORDER.map(({ key }) => (
-                    <td
-                      key={key}
-                      className={`border px-1 py-1 ${columnWidths[key] || ''} ${
-                        key === 'description'
-                          ? 'text-left  break-words whitespace-normal'
-                          : 'text-center'
-                      }`}
-                    >
+                     <td
+                     key={key}
+                     className={`border px-1 py-1 ${columnWidths[key] || ''} ${
+                       key === 'description' 
+                         ? 'text-left  break-words whitespace-normal'
+                         : 'text-center'
+                     }`}
+                   >
                       {key === 'status_job' ? (
                         <span
                           className={`font-semibold px-2 py-0.5 rounded
@@ -876,7 +877,7 @@ export default function BUSH4() {
                           />
                         ) : (
                           <div
-                            className="w-full text-left break-words whitespace-normal"
+                          className="w-full text-left break-words whitespace-normal"
                             onContextMenu={(e) => {
                               e.preventDefault();
                               setEditingCell({ id: row.id, field: key });
@@ -1082,6 +1083,43 @@ export default function BUSH4() {
               ))}
             </tbody>
           </table>
+          <div className="flex justify-start mt-4 text-[11px]">
+            <div className="flex items-center space-x-1">
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-2 py-1 rounded border bg-white text-black"
+              >
+                Prev
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-2 py-1 rounded border ${
+                      currentPage === page
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-white text-black'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )
+              )}
+
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className="px-2 py-1 rounded border bg-white text-black"
+              >
+                Next
+              </button>
+            </div>
+          </div>
 
           {notification && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
@@ -1121,42 +1159,6 @@ export default function BUSH4() {
               </div>
             </div>
           )}
-        </div>
-
-        <div className="flex justify-start mt-4 text-[11px]">
-          <div className="flex items-center space-x-1">
-            <button
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="px-2 py-1 rounded border bg-white text-black"
-            >
-              Prev
-            </button>
-
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`px-2 py-1 rounded border ${
-                  currentPage === page
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-white text-black'
-                }`}
-              >
-                {page}
-              </button>
-            ))}
-
-            <button
-              onClick={() =>
-                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-              }
-              disabled={currentPage === totalPages}
-              className="px-2 py-1 rounded border bg-white text-black"
-            >
-              Next
-            </button>
-          </div>
         </div>
       </div>
     </div>
