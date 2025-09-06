@@ -438,21 +438,41 @@ export default function BUSH4() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data, error } = await supabase
-        .from('mdr_tracking')
-        .select('*')
-        .eq('archived', false)
-        .order('date_in', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching archived data:', error);
-      } else {
-        setRows(data || []);
+      let allRows: any[] = [];
+      let from = 0;
+      const limit = 1000;
+      let moreData = true;
+  
+      while (moreData) {
+        const { data, error } = await supabase
+          .from('mdr_tracking')
+          .select('*')
+          .eq('archived', false)
+          .order('date_in', { ascending: false })
+          .range(from, from + limit - 1); // ambil per 1000
+  
+        if (error) {
+          console.error('Error fetching data:', error);
+          break;
+        }
+  
+        if (data && data.length > 0) {
+          allRows = [...allRows, ...data];
+          from += limit;
+          if (data.length < limit) {
+            moreData = false; // sudah habis
+          }
+        } else {
+          moreData = false;
+        }
       }
+  
+      setRows(allRows);
     };
-
+  
     fetchData();
   }, []);
+  
 
   const handleUpdate = async (
     id: string,
@@ -1083,44 +1103,7 @@ export default function BUSH4() {
               ))}
             </tbody>
           </table>
-          <div className="flex justify-start mt-4 text-[11px]">
-            <div className="flex items-center space-x-1">
-              <button
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="px-2 py-1 rounded border bg-white text-black"
-              >
-                Prev
-              </button>
-
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (page) => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`px-2 py-1 rounded border ${
-                      currentPage === page
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-white text-black'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                )
-              )}
-
-              <button
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                }
-                disabled={currentPage === totalPages}
-                className="px-2 py-1 rounded border bg-white text-black"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-
+         
           {notification && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
               <div className="bg-white px-6 py-4 rounded shadow-lg text-center text-gray-800 text-sm">
@@ -1160,6 +1143,29 @@ export default function BUSH4() {
             </div>
           )}
         </div>
+        <div className="flex justify-start mt-4 text-[11px] items-center space-x-2">
+  <button
+    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+    disabled={currentPage === 1}
+    className="px-2 py-1 rounded border bg-white text-black"
+  >
+    ◁ Prev
+  </button>
+
+  <span>
+    Page {currentPage} of {totalPages}
+  </span>
+
+  <button
+    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+    disabled={currentPage === totalPages}
+    className="px-2 py-1 rounded border bg-white text-black"
+  >
+    Next ▷
+  </button>
+</div>
+
+
       </div>
     </div>
   );
