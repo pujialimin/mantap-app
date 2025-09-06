@@ -80,6 +80,7 @@ const COLUMN_ORDER: { key: string; label: string }[] = [
   { key: 'doc_status', label: 'Doc Status' },
 
   { key: 'cek_sm1', label: 'W301' },
+
   { key: 'cek_cs1', label: 'W302' },
   { key: 'cek_mw', label: 'W303' },
   { key: 'cek_sm4', label: 'W304' },
@@ -193,7 +194,6 @@ const getStatusPE = (
 
   return '';
 };
-
 
 const formatDateToDDMMMYYYY = (date: Date): string => {
   const day = date.getDate().toString().padStart(2, '0');
@@ -442,7 +442,7 @@ export default function BUSH4() {
       let from = 0;
       const limit = 1000;
       let moreData = true;
-  
+
       while (moreData) {
         const { data, error } = await supabase
           .from('mdr_tracking')
@@ -450,12 +450,12 @@ export default function BUSH4() {
           .eq('archived', false)
           .order('date_in', { ascending: false })
           .range(from, from + limit - 1); // ambil per 1000
-  
+
         if (error) {
           console.error('Error fetching data:', error);
           break;
         }
-  
+
         if (data && data.length > 0) {
           allRows = [...allRows, ...data];
           from += limit;
@@ -466,13 +466,12 @@ export default function BUSH4() {
           moreData = false;
         }
       }
-  
+
       setRows(allRows);
     };
-  
+
     fetchData();
   }, []);
-  
 
   const handleUpdate = async (
     id: string,
@@ -508,23 +507,23 @@ export default function BUSH4() {
       // gabungkan row lama + update baru → simulatedRow
       let simulatedRow = { ...currentRow, ...updates };
 
-           // 🔹 Step 1: Recalculate status_pe kalau perlu
-           const keys = Object.keys(updates);
-           const affectsStatusPE = keys.some((k) =>
-       [
-         'doc_status',
-         'status_sm1',
-         'status_sm4',
-         'status_cs1',
-         'status_cs4',
-         'status_mw',
-         'cek_sm1',
-         'cek_sm4',
-         'cek_cs1',
-         'cek_cs4',
-         'cek_mw',
-       ].includes(k)
-     );
+      // 🔹 Step 1: Recalculate status_pe kalau perlu
+      const keys = Object.keys(updates);
+      const affectsStatusPE = keys.some((k) =>
+        [
+          'doc_status',
+          'status_sm1',
+          'status_sm4',
+          'status_cs1',
+          'status_cs4',
+          'status_mw',
+          'cek_sm1',
+          'cek_sm4',
+          'cek_cs1',
+          'cek_cs4',
+          'cek_mw',
+        ].includes(k)
+      );
 
       if (affectsStatusPE) {
         updates['status_pe'] = getStatusPE(
@@ -579,36 +578,32 @@ export default function BUSH4() {
     }
   };
 
-
   const filteredRows = rows
-  .filter((row) => {
-    if (showOnlyChecked && !selectedRows.includes(row.id)) return false;
-  
-    const matchesSearch = Object.values(row)
-      .join(' ')
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-  
-    const matchesAcReg = filterAcReg === '' || row.ac_reg === filterAcReg;
-    const matchesDocStatus =
-      filterDocStatus === '' || row.doc_status === filterDocStatus;
-    const matchesStatusJob =
-      filterStatusJob === '' || row.status_job === filterStatusJob;
-    const matchesPlntwkcntr = FILTERED_PLNTWKCNTR.includes(
-      (row.plntwkcntr || '').toUpperCase()
-    );
-  
-    return (
-      matchesSearch &&
-      matchesAcReg &&
-      matchesDocStatus &&
-      matchesStatusJob &&
-      matchesPlntwkcntr
-    );
-  })
-  
+    .filter((row) => {
+      if (showOnlyChecked && !selectedRows.includes(row.id)) return false;
 
+      const matchesSearch = Object.values(row)
+        .join(' ')
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
 
+      const matchesAcReg = filterAcReg === '' || row.ac_reg === filterAcReg;
+      const matchesDocStatus =
+        filterDocStatus === '' || row.doc_status === filterDocStatus;
+      const matchesStatusJob =
+        filterStatusJob === '' || row.status_job === filterStatusJob;
+      const matchesPlntwkcntr = FILTERED_PLNTWKCNTR.includes(
+        (row.plntwkcntr || '').toUpperCase()
+      );
+
+      return (
+        matchesSearch &&
+        matchesAcReg &&
+        matchesDocStatus &&
+        matchesStatusJob &&
+        matchesPlntwkcntr
+      );
+    })
 
     .sort((a, b) => {
       if (!sortKey) return 0;
@@ -730,23 +725,22 @@ export default function BUSH4() {
           </div>
 
           <select
-  value={filterAcReg}
-  onChange={(e) => setFilterAcReg(e.target.value)}
-  className="border rounded px-1 py-1 text-[11px]"
->
-  {/* Opsi default selalu di atas */}
-  <option value="">All A/C Reg</option>
+            value={filterAcReg}
+            onChange={(e) => setFilterAcReg(e.target.value)}
+            className="border rounded px-1 py-1 text-[11px]"
+          >
+            {/* Opsi default selalu di atas */}
+            <option value="">All A/C Reg</option>
 
-  {/* Urutkan sisanya */}
-  {[...new Set(rows.map((r) => r.ac_reg).filter(Boolean))]
-    .sort((a, b) => a.localeCompare(b))
-    .map((reg) => (
-      <option key={reg} value={reg}>
-        {reg}
-      </option>
-    ))}
-</select>
-
+            {/* Urutkan sisanya */}
+            {[...new Set(rows.map((r) => r.ac_reg).filter(Boolean))]
+              .sort((a, b) => a.localeCompare(b))
+              .map((reg) => (
+                <option key={reg} value={reg}>
+                  {reg}
+                </option>
+              ))}
+          </select>
 
           <select
             value={filterDocStatus}
@@ -762,16 +756,15 @@ export default function BUSH4() {
           </select>
 
           <select
-  value={filterStatusJob}
-  onChange={(e) => setFilterStatusJob(e.target.value)}
-  className="border rounded px-1 py-1 text-[11px]"
->
-  <option value="">All Status Job</option>
-  <option value="OPEN">OPEN</option>
-  <option value="PROGRESS">PROGRESS</option>
-  <option value="CLOSED">CLOSED</option>
-</select>
-
+            value={filterStatusJob}
+            onChange={(e) => setFilterStatusJob(e.target.value)}
+            className="border rounded px-1 py-1 text-[11px]"
+          >
+            <option value="">All Status Job</option>
+            <option value="OPEN">OPEN</option>
+            <option value="PROGRESS">PROGRESS</option>
+            <option value="CLOSED">CLOSED</option>
+          </select>
 
           {/* Sort By */}
           <select
@@ -847,24 +840,24 @@ export default function BUSH4() {
                   )}
 
                   {COLUMN_ORDER.map(({ key }) => (
-                     <td
-                     key={key}
-                     className={`border px-1 py-1 ${columnWidths[key] || ''} ${
-                       key === 'description' 
-                         ? 'text-left  break-words whitespace-normal'
-                         : 'text-center'
-                     }`}
-                   >
+                    <td
+                      key={key}
+                      className={`border px-1 py-1 ${columnWidths[key] || ''} ${
+                        key === 'description'
+                          ? 'text-left  break-words whitespace-normal'
+                          : 'text-center'
+                      }`}
+                    >
                       {key === 'status_job' ? (
                         <span
                           className={`font-semibold px-2 py-0.5 rounded
       ${
         row.status_job === 'OPEN'
-          ? 'bg-red-100 text-red-700'
+          ? 'bg-red-500 text-white'
           : row.status_job === 'PROGRESS'
-          ? 'bg-yellow-100 text-yellow-700'
+          ? 'bg-yellow-500 text-white'
           : row.status_job === 'CLOSED'
-          ? 'bg-green-100 text-green-700'
+          ? 'bg-green-500 text-white'
           : ''
       }`}
                         >
@@ -902,7 +895,7 @@ export default function BUSH4() {
                           />
                         ) : (
                           <div
-                          className="w-full text-left break-words whitespace-normal"
+                            className="w-full text-left break-words whitespace-normal"
                             onContextMenu={(e) => {
                               e.preventDefault();
                               setEditingCell({ id: row.id, field: key });
@@ -1025,7 +1018,19 @@ export default function BUSH4() {
                           onChange={(e) =>
                             handleUpdate(row.id, key, e.target.value)
                           }
-                          className="border rounded px-0.5 py-0.5"
+                          className={`border rounded px-0.5 py-0.5 w-[50px] text-[11px] text-left 
+                          ${row[key] === 'OPEN' ? 'bg-red-500 text-white' : ''}
+                          ${
+                            row[key] === 'PROGRESS'
+                              ? 'bg-yellow-500 text-white'
+                              : ''
+                          }
+                          ${
+                            row[key] === 'CLOSED'
+                              ? 'bg-green-500 text-white'
+                              : ''
+                          }
+                        `}
                         >
                           <option value=""></option>
                           <option value="OPEN">OPEN</option>
@@ -1108,7 +1113,7 @@ export default function BUSH4() {
               ))}
             </tbody>
           </table>
-         
+
           {notification && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
               <div className="bg-white px-6 py-4 rounded shadow-lg text-center text-gray-800 text-sm">
@@ -1149,28 +1154,28 @@ export default function BUSH4() {
           )}
         </div>
         <div className="flex justify-start mt-2 text-[11px] items-center space-x-2">
-  <button
-    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-    disabled={currentPage === 1}
-    className="px-2 py-1 rounded border bg-white text-black"
-  >
-    ◁ Prev
-  </button>
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-2 py-1 rounded border bg-white text-black"
+          >
+            ◁ Prev
+          </button>
 
-  <span>
-    Page {currentPage} of {totalPages}
-  </span>
+          <span>
+            Page {currentPage} of {totalPages}
+          </span>
 
-  <button
-    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-    disabled={currentPage === totalPages}
-    className="px-2 py-1 rounded border bg-white text-black"
-  >
-    Next ▷
-  </button>
-</div>
-
-
+          <button
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            disabled={currentPage === totalPages}
+            className="px-2 py-1 rounded border bg-white text-black"
+          >
+            Next ▷
+          </button>
+        </div>
       </div>
     </div>
   );
