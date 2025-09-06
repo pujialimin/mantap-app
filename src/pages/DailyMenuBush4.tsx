@@ -508,18 +508,23 @@ export default function BUSH4() {
       // gabungkan row lama + update baru → simulatedRow
       let simulatedRow = { ...currentRow, ...updates };
 
-      // 🔹 Step 1: Recalculate status_pe kalau perlu
-      const keys = Object.keys(updates);
-      const affectsStatusPE = keys.some((k) =>
-        [
-          'doc_status',
-          'status_sm1',
-          'status_sm4',
-          'status_cs1',
-          'status_cs4',
-          'status_mw',
-        ].includes(k)
-      );
+           // 🔹 Step 1: Recalculate status_pe kalau perlu
+           const keys = Object.keys(updates);
+           const affectsStatusPE = keys.some((k) =>
+       [
+         'doc_status',
+         'status_sm1',
+         'status_sm4',
+         'status_cs1',
+         'status_cs4',
+         'status_mw',
+         'cek_sm1',
+         'cek_sm4',
+         'cek_cs1',
+         'cek_cs4',
+         'cek_mw',
+       ].includes(k)
+     );
 
       if (affectsStatusPE) {
         updates['status_pe'] = getStatusPE(
