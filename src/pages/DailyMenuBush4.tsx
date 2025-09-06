@@ -1143,7 +1143,7 @@ export default function BUSH4() {
             </div>
           )}
         </div>
-        <div className="flex justify-start mt-4 text-[11px] items-center space-x-2">
+        <div className="flex justify-start mt-2 text-[11px] items-center space-x-2">
   <button
     onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
     disabled={currentPage === 1}
