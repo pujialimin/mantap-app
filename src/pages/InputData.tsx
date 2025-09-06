@@ -27,7 +27,7 @@ const DOC_STATUS_OPTIONS = [
 
 const getStatusPE = (doc_status: string): string => {
   const progressStatus = [
-    '🟡RO DONE',
+    
     '🟡EVALUATED',
     '🟡WAIT.BDP',
     '🟡CONTACT OEM',
@@ -46,7 +46,7 @@ const getStatusPE = (doc_status: string): string => {
     '🔘ROBBING',
   ];
 
-  if (['🔴NEED RO', '🔴WAIT.REMOVE'].includes(doc_status)) return 'OPEN';
+  if (['🟡RO DONE', '🔴NEED RO', '🔴WAIT.REMOVE'].includes(doc_status)) return 'OPEN';
   if (progressStatus.includes(doc_status)) return 'PROGRESS';
   if (closedStatus.includes(doc_status)) return 'CLOSED';
   return '';
