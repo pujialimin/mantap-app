@@ -10,11 +10,13 @@ import { Link, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 
+import { GiHotMeal } from 'react-icons/gi';
+
 const menuItems = [
   { label: 'Home', icon: <FaHome />, path: '/' },
   { label: 'Dashboard', icon: <FaChartBar />, path: '/dashboard' },
   { label: 'Input Data', icon: <FaEdit />, path: '/input' },
-  { label: 'Daily Menu', icon: <FaCalendarAlt />, path: null },
+  { label: 'Daily Menu', icon: <GiHotMeal />, path: null },
   { label: 'Daily Report', icon: <FaFileAlt />, path: null },
   { label: 'ABMP', icon: <FaCogs />, path: '/abmp' },
 ];
@@ -41,31 +43,27 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
 
   // Aturan blokir menu & submenu
   const blockedMenus: Record<string, string[]> = {
-    'tbr1dashboard@gmail.com': ['Daily Report', 'Daily Menu', 'Input Data'],// PO/CUSTOMER
+    'tbr1dashboard@gmail.com': ['Daily Report', 'Daily Menu', 'Input Data'], // PO/CUSTOMER
     'tbr.narrowbody@gmail.com': ['Daily Report'], // PE BUSH4
     'tbr.structureshop@gmail.com': ['Daily Report'], // PE WS1
     'sheetmetalbush4@gmail.com': ['Daily Menu', 'Input Data'], // SM BUSH4
     'asmorodoro@gmail.com': ['Daily Menu', 'Input Data'], // COMP BUSH4
     'tbr6composite.garuda@gmail.com': ['Daily Menu', 'Input Data'], // COMP BUSH4
-    
   };
 
   const blockedSubmenus: Record<string, string[]> = {
     'tbr.narrowbody@gmail.com': [
       ...dailyReportSubmenu.map((sub) => sub.label),
       'TBR WS1',
-    ],  // PE BUSH4
+    ], // PE BUSH4
     'tbr.structureshop@gmail.com': [
       ...dailyReportSubmenu.map((sub) => sub.label),
       'TBR BUSH4',
-    ],  // PE WS1
+    ], // PE WS1
 
     'sheetmetalbush4@gmail.com': ['W301', 'W302', 'W303', 'W305'], // SM BUSH4
     'asmorodoro@gmail.com': ['W301', 'W302', 'W303', 'W304'], // COMP BUSH4
     'tbr6composite.garuda@gmail.com': ['W301', 'W302', 'W303', 'W304'], // COMP BUSH4
- 
- 
- 
   };
 
   // Filter menu utama
@@ -92,7 +90,7 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
         </div>
       )}
 
-      <ul className="space-y-2">
+      <ul className="space-y-1">
         {filteredMenuItems.map((item) => (
           <li key={item.label}>
             {/* Dropdown menu check */}
@@ -173,6 +171,12 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
           </li>
         ))}
       </ul>
+      {/* Version Info di pojok kiri bawah */}
+      {!isCollapsed && (
+        <div className="absolute bottom-6 left-2 text-xs text-[#f0f0f0]">
+          Version PA.1.3.0
+        </div>
+      )}
     </div>
   );
 }

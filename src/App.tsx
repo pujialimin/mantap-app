@@ -29,11 +29,17 @@ import { useState, useEffect } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { useRef } from 'react';
 
+import { GiHotMeal } from 'react-icons/gi';
+import { MdLogout } from 'react-icons/md';
+import { FaUserCircle } from 'react-icons/fa';
+
 function MainLayout() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const idleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const displayName = userEmail ? userEmail.split('@')[0] : '';
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -51,11 +57,21 @@ function MainLayout() {
   useEffect(() => {
     // Cek jika tidak ada session, arahkan ke login
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) navigate('/login', { replace: true });
+      if (!session) {
+        navigate('/login', { replace: true });
+      } else {
+        setUserEmail(session.user.email ?? null); // simpan email user
+      }
     });
 
     // 🟡 Tambahkan event listener untuk aktifitas user
-    const events = ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll'];
+    const events = [
+      'mousemove',
+      'keydown',
+      'mousedown',
+      'touchstart',
+      'scroll',
+    ];
     events.forEach((event) => window.addEventListener(event, resetIdleTimer));
 
     // 🟢 Set idle timer awal
@@ -64,11 +80,12 @@ function MainLayout() {
     // 🧹 Cleanup saat unmount
     return () => {
       if (idleTimeoutRef.current) clearTimeout(idleTimeoutRef.current);
-      events.forEach((event) => window.removeEventListener(event, resetIdleTimer));
+      events.forEach((event) =>
+        window.removeEventListener(event, resetIdleTimer)
+      );
     };
   }, []);
 
-  
   const getTitle = () => {
     switch (location.pathname) {
       case '/dashboard':
@@ -76,9 +93,19 @@ function MainLayout() {
       case '/input':
         return 'Input Data';
       case '/daily-menu/bush4':
-        return 'Daily Menu TBR BUSH 4';
+        return (
+          <span className="flex items-center space-x-2">
+            <GiHotMeal className="w-5 h-5 text-white" />
+            <span>Daily Menu TBR BUSH4</span>
+          </span>
+        );
       case '/daily-menu/ws1':
-        return 'Daily Menu TBR WS 1';
+        return (
+          <span className="flex items-center space-x-2">
+            <GiHotMeal className="w-5 h-5 text-white" />
+            <span>Daily Menu TBR WS 1</span>
+          </span>
+        );
       case '/archived':
         return 'Archived';
       case '/daily-report':
@@ -107,9 +134,7 @@ function MainLayout() {
       }
     });
   }, []);
-  
-  
-  
+
   return (
     <div className="flex">
       <Sidebar isCollapsed={isCollapsed} />
@@ -119,26 +144,34 @@ function MainLayout() {
         }`}
       >
         {/* Header */}
-<div className="flex items-center justify-between bg-white px-4 py-3 shadow sticky top-0 z-10">
-  <div className="flex items-center gap-4">
-    <button
-      className="text-gray-700 text-lg focus:outline-none"
-      onClick={() => setIsCollapsed(!isCollapsed)}
-      title="Toggle Sidebar"
-    >
-      <FaBars />
-    </button>
-    <h1 className="text-lg font-semibold text-gray-800">{getTitle()}</h1>
-  </div>
+        <div className="flex items-center justify-between bg-[#00717a] px-4 py-2 shadow sticky top-0 z-10">
+          <div className="flex items-center gap-4">
+            <button
+              className="text-white text-lg focus:outline-none"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              title="Toggle Sidebar"
+            >
+              <FaBars />
+            </button>
+            <h1 className="text-lg font-semibold text-white">{getTitle()}</h1>
+          </div>
 
-  {/* Logout button */}
-  <button
-    onClick={handleLogout}
-    className="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
-  >
-    Logout
-  </button>
-</div>
+          <div className="flex items-center gap-3">
+            {userEmail && (
+              <div className="flex items-center gap-2 text-sm text-white">
+                <FaUserCircle className="w-5 h-5 text-white" />
+                <span>{displayName}</span>
+              </div>
+            )}
+            <button
+              onClick={handleLogout}
+              className="flex items-center space-x-1 bg-white text-[#004d53] px-2 py-1 rounded text-xs hover:bg-red-600"
+            >
+              <MdLogout className="w-4 h-4" />
+              <span>Logout</span>
+            </button>
+          </div>
+        </div>
 
         {/* Main Content */}
         <div className="p-4 w-full h-full overflow-x-hidden">
@@ -166,16 +199,15 @@ function MainLayout() {
 export default function App() {
   return (
     <AuthProvider>
-    <Router>
-      <Routes>
-        {/* 🟨 Login tidak memakai sidebar/header */}
-        <Route path="/login" element={<Login />} />
+      <Router>
+        <Routes>
+          {/* 🟨 Login tidak memakai sidebar/header */}
+          <Route path="/login" element={<Login />} />
 
-        {/* 🟩 Semua route lain dibungkus Sidebar/Header */}
-        <Route path="*" element={<MainLayout />} />
-      </Routes>
-    </Router>
+          {/* 🟩 Semua route lain dibungkus Sidebar/Header */}
+          <Route path="*" element={<MainLayout />} />
+        </Routes>
+      </Router>
     </AuthProvider>
   );
 }
-

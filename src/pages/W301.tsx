@@ -66,7 +66,7 @@ function DownloadPDFButton({
     <div className="relative">
       <button
         onClick={() => setShowConfirm(true)}
-        className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded shadow"
+        className="bg-[#d54336] hover:bg-[#aa0e00] text-white text-[11px] px-2 py-1 rounded shadow"
       >
         Download PDF
       </button>
@@ -98,7 +98,6 @@ function DownloadPDFButton({
 }
 
 const supervisorList = [
-  
   '529528 / NANDANG SUPRIATNA',
   '532859 / CANDRA SUKMANA',
   '532871 / HERU GUNAWAN',
@@ -134,9 +133,7 @@ const timeOptions = [
   '03.00 PM',
   '10.00 PM',
 ];
-const managerOptions = [
-  '523974 / BAMBANG SUTISNO',
-];
+const managerOptions = ['523974 / BAMBANG SUTISNO'];
 
 const columnWidths: Record<string, string> = {
   ac_reg: 'min-w-[0px]',
@@ -221,6 +218,7 @@ export default function W301() {
   const [filterStatus, setFilterStatus] = useState('All Status');
   const [filterAcReg, setFilterAcReg] = useState('');
 
+  const [notification, setNotification] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState('');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [confirmDownload, setConfirmDownload] = useState(false);
@@ -275,31 +273,68 @@ export default function W301() {
       : String(bValue).localeCompare(String(aValue));
   });
 
+  // copy: hilang saat user klik di luar
+  useEffect(() => {
+    if (notification) {
+      const handleClickOutside = () => {
+        setNotification(null);
+      };
+      window.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        window.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [notification]);
+
+  {
+    /* useeffect page/filter */
+  }
   useEffect(() => {
     const fetchData = async () => {
-      const { data, error } = await supabase
-        .from('mdr_tracking')
-        .select('*')
-        .eq('archived', false)
-        .order('date_in', { ascending: false });
+      let allRows: any[] = [];
+      let from = 0;
+      const limit = 1000;
+      let moreData = true;
 
-      if (error) {
-        console.error('Error fetching data:', error);
-      } else {
-        const filtered = (data || []).filter((r) => r.cek_sm1 === 'red');
-        const filteredReport = filterReportOnly
-          ? filtered.filter(
-              (r) =>
-                r.report_sm1 === true ||
-                r.report_sm1 === '1' ||
-                r.report_sm1 === 'checked'
-            )
-          : filtered;
-        setRows(filteredReport);
+      while (moreData) {
+        const { data, error } = await supabase
+          .from('mdr_tracking')
+          .select('*')
+          .eq('archived', false)
+          .order('date_in', { ascending: false })
+          .range(from, from + limit - 1); // ambil per 1000
 
-        setFilteredData(filteredReport);
+        if (error) {
+          console.error('Error fetching data:', error);
+          break;
+        }
+
+        if (data && data.length > 0) {
+          allRows = [...allRows, ...data];
+          from += limit;
+          if (data.length < limit) {
+            moreData = false; // sudah habis
+          }
+        } else {
+          moreData = false;
+        }
       }
+
+      // filter sesuai logika w301
+      const filtered = allRows.filter((r) => r.cek_sm1 === 'red');
+      const filteredReport = filterReportOnly
+        ? filtered.filter(
+            (r) =>
+              r.report_sm1 === true ||
+              r.report_sm1 === '1' ||
+              r.report_sm1 === 'checked'
+          )
+        : filtered;
+
+      setRows(filteredReport);
+      setFilteredData(filteredReport);
     };
+
     fetchData();
   }, [filterReportOnly]);
 
@@ -386,6 +421,9 @@ export default function W301() {
   const formattedDate = formatDateToDDMMMYYYY(new Date()); // hasil: 26 Jul 2025
   const shift = shiftOut || '-';
 
+  {
+    /* page */
+  }
   const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
   const paginatedRows = filteredRows.slice(
     (currentPage - 1) * rowsPerPage,
@@ -428,7 +466,7 @@ export default function W301() {
             {/* Toggle Check Report */}
             <div className="flex items-center ml-0">
               <span className="text-xs font-medium"></span>
-              <label className="relative inline-flex items-center cursor-pointer select-none w-12 h-6">
+              <label className="relative inline-flex items-center cursor-pointer select-none w-11 h-5">
                 <input
                   type="checkbox"
                   checked={filterReportOnly}
@@ -436,7 +474,7 @@ export default function W301() {
                   className="sr-only peer"
                 />
                 <div className="w-full h-full bg-gray-300 rounded-full peer-checked:bg-blue-600 transition-colors duration-200" />
-                <div className="absolute top-0.5 left-0.5 w-5 h-5 bg-white border border-gray-300 rounded-full transition-transform duration-200 peer-checked:translate-x-[24px]" />
+                <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white border border-gray-300 rounded-full transition-transform duration-200 peer-checked:translate-x-[24px]" />
                 <span className="absolute left-1 top-1/2 -translate-y-1/2 text-[10px] text-white font-semibold opacity-0 peer-checked:opacity-100 transition-opacity duration-200">
                   ON
                 </span>
@@ -454,14 +492,14 @@ export default function W301() {
                 placeholder="Search"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="border px-1 py-1 rounded w-[150px] text-xs"
+                className="border rounded px-1 py-1 text-[12px] hover:bg-gray-50 shadow"
               />
 
               {/* ✈️ Filter A/C REG */}
               <select
                 value={filterAcReg}
                 onChange={(e) => setFilterAcReg(e.target.value)}
-                className="border px-1 py-1 rounded text-xs"
+                className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow"
               >
                 <option value="">All A/C Reg</option>
                 {[...new Set(rows.map((item) => item.ac_reg))].map((reg) => (
@@ -475,7 +513,7 @@ export default function W301() {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="border px-1 py-1 rounded text-xs"
+                className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow"
               >
                 <option value="All Status">All Status</option>
                 <option value="OPEN">OPEN</option>
@@ -488,7 +526,7 @@ export default function W301() {
               <select
                 value={sortKey}
                 onChange={(e) => setSortKey(e.target.value)}
-                className="border px-1 py-1 rounded text-xs"
+                className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow"
               >
                 <option value="">Sort by...</option>
                 {sortOptions.map(({ value, label }) => (
@@ -503,12 +541,58 @@ export default function W301() {
                 onChange={(e) =>
                   setSortDirection(e.target.value as 'asc' | 'desc')
                 }
-                className="border px-1 py-1 rounded text-xs"
+                className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow"
               >
                 <option value="asc">A-Z</option>
                 <option value="desc">Z-A</option>
               </select>
             </div>
+
+            {/* Tombol Copy */}
+            <button
+              onClick={() => {
+                const clean = (val: any) =>
+                  (val || '')
+                    .toString()
+                    .replace(/\r?\n|\r/g, ' ') // hapus newline
+                    .replace(/\t/g, ' ') // hapus tab
+                    .trim();
+
+                const selectedData = rows
+                  .filter(
+                    (row) =>
+                      row.report_sm1 === true ||
+                      row.report_sm1 === '1' ||
+                      row.report_sm1 === 'checked'
+                  )
+                  .map((row) => [
+                    clean(row.doc_type),
+                    clean(row.ac_reg),
+                    clean(row.order),
+                    clean(row.description),
+                    clean(row.handle_by_sm1),
+                    clean(row.status_sm1),
+                    clean(row.remark_sm1),
+                  ])
+                  .map((fields) => fields.join('\t'))
+                  .join('\n');
+
+                if (!selectedData) {
+                  setNotification('❗ No rows selected.');
+                  return;
+                }
+
+                navigator.clipboard
+                  .writeText(selectedData)
+                  .then(() => setNotification('✅ Data copied to clipboard!'))
+                  .catch(() =>
+                    setNotification('❌ Failed to copy to clipboard.')
+                  );
+              }}
+              className="bg-blue-500 hover:bg-blue-600 text-white text-[11px] px-2 py-1 rounded shadow"
+            >
+              Copy
+            </button>
 
             {/* Kanan: Tombol WhatsApp */}
             <button
@@ -557,7 +641,7 @@ export default function W301() {
                 const url = `https://wa.me/?text=${encoded}`;
                 window.open(url, '_blank');
               }}
-              className="bg-green-500 hover:bg-green-600 text-white text-xs px-2 py-1 rounded shadow"
+              className="bg-green-500 hover:bg-green-600 text-white text-[11px] px-2 py-1 rounded shadow"
             >
               Send WhatsApp
             </button>
@@ -749,11 +833,11 @@ export default function W301() {
                           className={`border rounded px-1 py-0.5 text-xs w-full
                 ${
                   row[key] === 'OPEN'
-                    ? 'bg-red-100 text-red-700'
+                    ? 'bg-red-500 text-white'
                     : row[key] === 'PROGRESS'
-                    ? 'bg-yellow-100 text-yellow-800'
+                    ? 'bg-yellow-500 text-white'
                     : row[key] === 'CLOSED'
-                    ? 'bg-green-100 text-green-700'
+                    ? 'bg-green-500 text-white'
                     : ''
                 }`}
                         >
@@ -780,43 +864,38 @@ export default function W301() {
               ))}
             </tbody>
           </table>
-          <div className="flex justify-start mt-4 text-[11px]">
-            <div className="flex items-center space-x-1">
-              <button
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="px-2 py-1 rounded border bg-white text-black"
-              >
-                Prev
-              </button>
-
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (page) => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`px-2 py-1 rounded border ${
-                      currentPage === page
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-white text-black'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                )
-              )}
-
-              <button
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                }
-                disabled={currentPage === totalPages}
-                className="px-2 py-1 rounded border bg-white text-black"
-              >
-                Next
-              </button>
+          {notification && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+              <div className="bg-white px-6 py-4 rounded shadow-lg text-center text-gray-800 text-sm">
+                {notification}
+              </div>
             </div>
-          </div>
+          )}
+        </div>
+
+        {/* tombol page */}
+        <div className="flex justify-start mt-2 text-[11px] items-center space-x-2">
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-2 py-0.5 rounded border bg-white text-black hover:bg-gray-50 shadow"
+          >
+            ◁ Prev
+          </button>
+
+          <span>
+            Page {currentPage} of {totalPages}
+          </span>
+
+          <button
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            disabled={currentPage === totalPages}
+            className="px-2 py-0.5 rounded border bg-white text-black hover:bg-gray-50 shadow"
+          >
+            Next ▷
+          </button>
         </div>
       </div>
     </div>

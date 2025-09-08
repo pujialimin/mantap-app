@@ -671,7 +671,7 @@ export default function BUSH4() {
             placeholder="Search..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="border rounded px-1 py-1 text-xs w-30 "
+            className="border rounded px-1 py-1 text-[12px] hover:bg-gray-50 shadow-sm"
           />
 
           <button
@@ -727,7 +727,7 @@ export default function BUSH4() {
           <select
             value={filterAcReg}
             onChange={(e) => setFilterAcReg(e.target.value)}
-            className="border rounded px-1 py-1 text-[11px]"
+            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow"
           >
             {/* Opsi default selalu di atas */}
             <option value="">All A/C Reg</option>
@@ -745,7 +745,7 @@ export default function BUSH4() {
           <select
             value={filterDocStatus}
             onChange={(e) => setFilterDocStatus(e.target.value)}
-            className="border rounded px-1 py-1 text-[11px]"
+            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow"
           >
             <option value="">All Doc Status</option>
             {DOC_STATUS_OPTIONS.map((status) => (
@@ -758,7 +758,7 @@ export default function BUSH4() {
           <select
             value={filterStatusJob}
             onChange={(e) => setFilterStatusJob(e.target.value)}
-            className="border rounded px-1 py-1 text-[11px]"
+            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow"
           >
             <option value="">All Status Job</option>
             <option value="OPEN">OPEN</option>
@@ -770,7 +770,7 @@ export default function BUSH4() {
           <select
             value={sortKey}
             onChange={(e) => setSortKey(e.target.value)}
-            className="border rounded px-1 py-1 text-[11px]"
+            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow"
           >
             <option value="">Sort by...</option>
             {sortOptions.map((option) => (
@@ -784,7 +784,7 @@ export default function BUSH4() {
           <select
             value={sortDirection}
             onChange={(e) => setSortDirection(e.target.value as 'asc' | 'desc')}
-            className="border rounded px-1 py-1 text-[11px]"
+            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow"
           >
             <option value="asc">A-Z</option>
             <option value="desc">Z-A</option>
@@ -795,7 +795,7 @@ export default function BUSH4() {
         <div className="w-full overflow-auto max-h-[70vh] border border-gray-300 rounded shadow-inner">
           <table className="w-full whitespace-nowrap table-auto text-[11px] leading-tight">
             <thead className="sticky top-0 z-10 bg-white shadow">
-              <tr className="bg-gradient-to-t from-[#00838F] to-[#00838F] text-white text-xs font-semibold text-center">
+              <tr className="bg-[#00919f] text-white text-xs font-semibold text-center">
                 {/* ✅ Tampilkan checkbox hanya jika showCheckboxColumn true */}
                 {showCheckboxColumn && (
                   <th className="border px-1 py-1 text-center">
@@ -1157,7 +1157,7 @@ export default function BUSH4() {
           <button
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
-            className="px-2 py-1 rounded border bg-white text-black"
+            className="px-2 py-0.5 rounded border bg-white text-black hover:bg-gray-50 shadow"
           >
             ◁ Prev
           </button>
@@ -1171,7 +1171,7 @@ export default function BUSH4() {
               setCurrentPage((prev) => Math.min(prev + 1, totalPages))
             }
             disabled={currentPage === totalPages}
-            className="px-2 py-1 rounded border bg-white text-black"
+            className="px-2 py-0.5 rounded border bg-white text-black hover:bg-gray-50 shadow"
           >
             Next ▷
           </button>
