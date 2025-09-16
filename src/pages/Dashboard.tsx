@@ -242,6 +242,20 @@ export default function BUSH4() {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 100;
 
+// filter ac reg
+const [showSuggestions, setShowSuggestions] = useState(false);
+
+// Ambil unique A/C Reg dari rows
+const uniqueAcRegs = [
+  ...new Set(rows.map((r) => r.ac_reg).filter(Boolean)),
+].sort((a, b) => a.localeCompare(b));
+
+// Filter opsi berdasarkan input
+const filteredOptions = uniqueAcRegs.filter((reg) =>
+  reg.toLowerCase().includes(filterAcReg.toLowerCase())
+);
+//////
+
   const confirmAction = (action: () => void) => {
     setPendingAction(() => action);
     setShowConfirmModal(true);
@@ -864,326 +878,320 @@ export default function BUSH4() {
 
   return (
     <div className="bg-gray-100 w-full h-full">
-      <div className="bg-white px-3 pt-3 pb-6 max-h-[120vh] overflow-hidden w-full rounded-lg">
-        {/* 📊 Status Summary dan Donut Chart */}
-        <div className="flex gap-4 items-start w-full mb-4">
-          {/* 🔹 Kiri: PieChart Status DOC */}
-          <div className="flex flex-col items-center border py-2 px-2 rounded-[5px] shadow">
-            <h3 className="text-sm font-bold text-gray-700 mb-1">
-              Status Document
-            </h3>
-            <PieChart width={150} height={150}>
-              <Pie
-                data={docStatusCounts}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                innerRadius={40}
-                outerRadius={75}
-                paddingAngle={2}
-              >
-                {docStatusCounts.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-                <Label
-                  value={`${(
-                    (docStatusCounts
-                      .filter(
-                        (d) => d.name.includes('🟢') || d.name.includes('🟘')
-                      )
-                      .reduce((acc, d) => acc + d.value, 0) /
-                      (totalDocStatus || 1)) *
-                    100
-                  ).toFixed(0)}%`}
-                  position="center"
-                  style={{
-                    fontSize: '25px',
-                    fontWeight: 'bold',
-                    fill: '#374151',
-                  }}
-                />
-              </Pie>
-              <Tooltip
-                formatter={(value: number, name: string) => [
-                  `${value}`,
-                  `${name}`,
-                ]}
-                itemStyle={{ fontSize: '11px' }}
-                padding={[4, 8]}
-              />
-            </PieChart>
-          </div>
+      <div className="bg-white px-3 pt-3 pb-6 max-h-[280vh] overflow-hidden w-full rounded-lg">
+         {/* 📊 Status Summary dan Donut Chart */}
+         <div className="flex gap-4 items-start w-full mb-2">
 
-          {/* 🔹 Kanan: Kotak + PieChart W301-W305 */}
-          <div className="flex flex-col flex-1 gap-3">
-            {/* Baris 1: Kotak Status */}
-            <div className="flex flex-wrap gap-3">
-              {/* TOTAL */}
-              <div className="border-[3px] border-gray-500 rounded-[5px] overflow-hidden text-center w-[112px] h-14">
-                <div className="bg-gray-500 text-white py-0 font-bold">
-                  TOTAL
-                </div>
-                <div className="bg-white text-gray-700 text-lg font-bold py-0 text-center">
-                  {statusCounts.OPEN +
-                    statusCounts.PROGRESS +
-                    statusCounts.CLOSED}
-                </div>
-              </div>
+{/* 🔹 Kiri: List Status DOC */}
+<div className="flex flex-col border rounded-[10px] shadow w-64 h-[187px]">
+{/* Header dengan background berwarna */}
+<div className="flex justify-between items-center w-full px-4  bg-[#7864bc] rounded-t-[10px]">
+<h3 className="text-white py-0 font-bold">STATUS DOCUMENT</h3>
+<span className="text-sm font-bold text-white">
+{(
+ (docStatusCounts
+   .filter(
+     (d) => d.name.includes("🟢") || d.name.includes("🟘")
+   )
+   .reduce((acc, d) => acc + d.value, 0) /
+   (totalDocStatus || 1)) *
+ 100
+).toFixed(0)}%
+</span>
+</div>
 
-              {/* PERCENTAGE */}
-              <div className="border-[3px] border-blue-500 rounded-[5px] overflow-hidden text-center w-[107px] h-14">
-                <div className="bg-blue-500 text-white py-0 font-bold">
-                  PERCENT
-                </div>
-                <div className="bg-white text-blue-500 text-lg font-bold py-0 text-center">
-                  {(
-                    (statusCounts.CLOSED /
-                      (statusCounts.OPEN +
-                        statusCounts.PROGRESS +
-                        statusCounts.CLOSED || 1)) *
-                    100
-                  ).toFixed(0)}
-                  %
-                </div>
-              </div>
+{/* Daftar scrollable dengan garis pembatas */}
+<ul className="w-full max-h-full overflow-y-auto text-xs divide-y divide-gray-200">
+{docStatusCounts.map((entry, index) => (
+<li
+ key={index}
+ className="flex justify-between items-center px-2 py-1"
+>
+ <span>{entry.name}</span>
+ <span className="font-semibold text-gray-700">{entry.value}</span>
+</li>
+))}
+</ul>
+</div>
 
-              {/* OPEN */}
-              <div className="border-[3px] border-red-500 rounded-[5px] overflow-hidden text-center w-[107px] h-14">
-                <div className="bg-red-500 text-white py-0 font-bold">OPEN</div>
-                <div className="bg-white text-red-500 text-lg font-bold py-0 text-center">
-                  {statusCounts.OPEN}
-                </div>
-              </div>
 
-              {/* PROGRESS */}
-              <div className="border-[3px] border-yellow-500 rounded-[5px] overflow-hidden text-center w-[109px] h-14">
-                <div className="bg-yellow-500 text-white py-0 font-bold">
-                  PROGRESS
-                </div>
-                <div className="bg-white text-yellow-500 text-lg font-bold py-0 text-center">
-                  {statusCounts.PROGRESS}
-                </div>
-              </div>
 
-              {/* CLOSED */}
-              <div className="border-[3px] border-green-500 rounded-[5px] overflow-hidden text-center w-[108px] h-14">
-                <div className="bg-green-500 text-white py-0 font-bold">
-                  CLOSED
-                </div>
-                <div className="bg-white text-green-500 text-lg font-bold py-0 text-center">
-                  {statusCounts.CLOSED}
-                </div>
-              </div>
-            </div>
 
-            {/* Baris 2: Chart Status W301-W305 */}
-            <div className="flex flex-wrap gap-3">
-              {/* Status W301 */}
-              <div className="flex flex-col items-center border py-2 px-2 rounded-[5px] shadow">
-                <h3 className="text-xs font-bold text-gray-700 mb-1">
-                  Sheetmetal WS1
-                </h3>
-                <PieChart width={94} height={80}>
-                  <Pie
-                    data={chartDataSm1}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={20}
-                    outerRadius={40}
-                    paddingAngle={2}
-                  >
-                    {chartDataSm1.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                    <Label
-                      value={`${closedPercentageSm1}%`}
-                      position="center"
-                      style={{
-                        fontSize: '14px',
-                        fontWeight: 'bold',
-                        fill: '#374151',
-                      }}
-                    />
-                  </Pie>
-                  <Tooltip
-                    formatter={(value: number, name: string) => [
-                      `${value}`,
-                      `${name}`,
-                    ]}
-                    itemStyle={{ fontSize: '11px' }}
-                  />
-                </PieChart>
-              </div>
 
-              <div className="flex flex-col items-center border py-2 px-2 rounded-[5px] shadow">
-                {/* chart Status W302 */}
-                <h3 className="text-xs font-bold text-gray-700 mb-1">
-                  Composite WS1
-                </h3>
+   {/* 🔹 Kanan: Kotak + PieChart W301-W305 */}
+   <div className="flex flex-col flex-1 gap-3">
+     {/* Baris 1: Kotak Status */}
+     <div className="flex flex-wrap gap-3">
+       {/* PERCENTAGE */}
+       <div className="border rounded-[10px] overflow-hidden text-center w-[125px] h-14 shadow">
+         <div className="bg-blue-500 text-white py-0 font-bold">
+           PERCENT
+         </div>
+         <div className="bg-white text-blue-500 text-lg font-bold py-0 text-center">
+           {(
+             (statusCounts.CLOSED /
+               (statusCounts.OPEN +
+                 statusCounts.PROGRESS +
+                 statusCounts.CLOSED || 1)) *
+             100
+           ).toFixed(0)}
+           %
+         </div>
+       </div>
 
-                <PieChart width={90} height={80}>
-                  <Pie
-                    data={chartDataCs1}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={20}
-                    outerRadius={40}
-                    paddingAngle={2}
-                  >
-                    {chartDataCs1.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                    {/* Label di tengah donut */}
-                    <Label
-                      value={`${closedPercentageCs1}%`}
-                      position="center"
-                      style={{
-                        fontSize: '14px',
-                        fontWeight: 'bold',
-                        fill: '#374151', // abu tua
-                      }}
-                    />
-                  </Pie>
-                  <Tooltip
-                    formatter={(value: number, name: string) => [
-                      `${value}`,
-                      `${name}`,
-                    ]}
-                    itemStyle={{ fontSize: '11px' }}
-                  />
-                </PieChart>
-              </div>
+       
 
-              <div className="flex flex-col items-center border py-2 px-2 rounded-[5px] shadow">
-                {/* chart Status W303 */}
-                <h3 className="text-xs font-bold text-gray-700 mb-1">
-                  Machining WS1
-                </h3>
+       
 
-                <PieChart width={90} height={80}>
-                  <Pie
-                    data={chartDataMw}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={20}
-                    outerRadius={40}
-                    paddingAngle={2}
-                  >
-                    {chartDataCs1.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                    {/* Label di tengah donut */}
-                    <Label
-                      value={`${closedPercentageMw}%`}
-                      position="center"
-                      style={{
-                        fontSize: '14px',
-                        fontWeight: 'bold',
-                        fill: '#374151', // abu tua
-                      }}
-                    />
-                  </Pie>
-                  <Tooltip
-                    formatter={(value: number, name: string) => [
-                      `${value}`,
-                      `${name}`,
-                    ]}
-                    itemStyle={{ fontSize: '11px' }}
-                  />
-                </PieChart>
-              </div>
+       {/* OPEN */}
+       <div className="border rounded-[10px] overflow-hidden text-center w-[125px] h-14 shadow">
+         <div className="bg-red-500 text-white py-0 font-bold">OPEN</div>
+         <div className="bg-white text-red-500 text-lg font-bold py-0 text-center">
+           {statusCounts.OPEN}
+         </div>
+       </div>
 
-              <div className="flex flex-col items-center border py-2 px-2 rounded-[5px] shadow">
-                {/* chart Status W304 */}
-                <h3 className="text-xs font-bold text-gray-700 mb-1">
-                  Sheetmetal H4
-                </h3>
+       {/* PROGRESS */}
+       <div className="border rounded-[10px] overflow-hidden text-center w-[125px] h-14 shadow">
+         <div className="bg-yellow-500 text-white py-0 font-bold">
+           PROGRESS
+         </div>
+         <div className="bg-white text-yellow-500 text-lg font-bold py-0 text-center">
+           {statusCounts.PROGRESS}
+         </div>
+       </div>
 
-                <PieChart width={90} height={80}>
-                  <Pie
-                    data={chartDataSm4}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={20}
-                    outerRadius={40}
-                    paddingAngle={2}
-                  >
-                    {chartDataSm4.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                    {/* Label di tengah donut */}
-                    <Label
-                      value={`${closedPercentageSm4}%`}
-                      position="center"
-                      style={{
-                        fontSize: '14px',
-                        fontWeight: 'bold',
-                        fill: '#374151', // abu tua
-                      }}
-                    />
-                  </Pie>
-                  <Tooltip
-                    formatter={(value: number, name: string) => [
-                      `${value}`,
-                      `${name}`,
-                    ]}
-                    itemStyle={{ fontSize: '11px' }}
-                  />
-                </PieChart>
-              </div>
+       {/* CLOSED */}
+       <div className="border rounded-[10px] overflow-hidden text-center w-[125px] h-15 shadow">
+         <div className="bg-green-500 text-white py-0 font-bold">
+           CLOSED
+         </div>
+         <div className="bg-white text-green-500 text-lg font-bold py-0 text-center">
+           {statusCounts.CLOSED}
+         </div>
+       </div>
 
-              <div className="flex flex-col items-center border py-2 px-2 rounded-[5px] shadow">
-                {/* chart Status W305 */}
-                <h3 className="text-xs font-bold text-gray-700 mb-1">
-                  Composite H4
-                </h3>
+       {/* TOTAL */}
+       <div className="border rounded-[10px] overflow-hidden text-center w-[125px] h-14 shadow">
+         <div className="bg-[#e36b45] text-white py-0 font-bold">
+           TOTAL
+         </div>
+         <div className="bg-white text-gray-700 text-lg font-bold py-0 text-center">
+           {statusCounts.OPEN +
+             statusCounts.PROGRESS +
+             statusCounts.CLOSED}
+         </div>
+       </div>
 
-                <PieChart width={90} height={80}>
-                  <Pie
-                    data={chartDataCs4}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={20}
-                    outerRadius={40}
-                    paddingAngle={2}
-                  >
-                    {chartDataCs4.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                    {/* Label di tengah donut */}
-                    <Label
-                      value={`${closedPercentageCs4}%`}
-                      position="center"
-                      style={{
-                        fontSize: '14px',
-                        fontWeight: 'bold',
-                        fill: '#374151', // abu tua
-                      }}
-                    />
-                  </Pie>
-                  <Tooltip
-                    formatter={(value: number, name: string) => [
-                      `${value}`,
-                      `${name}`,
-                    ]}
-                    itemStyle={{ fontSize: '11px' }}
-                  />
-                </PieChart>
-              </div>
-            </div>
-          </div>
-        </div>
+     </div>
+
+     {/* Baris 2: Chart Status W301-W305 */}
+     <div className="flex flex-wrap gap-3">
+       {/* Status W301 */}
+       <div className="flex flex-col items-center border py-2 px-2 rounded-[10px] w-[125px] shadow">
+         <h3 className="text-xs font-bold text-gray-700 mb-1">
+           SHEETMETAL WS1
+         </h3>
+         <PieChart width={94} height={80}>
+           <Pie
+             data={chartDataSm1}
+             dataKey="value"
+             nameKey="name"
+             cx="50%"
+             cy="50%"
+             innerRadius={20}
+             outerRadius={40}
+             paddingAngle={2}
+           >
+             {chartDataSm1.map((entry, index) => (
+               <Cell key={`cell-${index}`} fill={entry.color} />
+             ))}
+             <Label
+               value={`${closedPercentageSm1}%`}
+               position="center"
+               style={{
+                 fontSize: '14px',
+                 fontWeight: 'bold',
+                 fill: '#374151',
+               }}
+             />
+           </Pie>
+           <Tooltip
+             formatter={(value: number, name: string) => [
+               `${value}`,
+               `${name}`,
+             ]}
+             itemStyle={{ fontSize: '11px' }}
+           />
+         </PieChart>
+       </div>
+
+       <div className="flex flex-col items-center border py-2 px-2 rounded-[10px] w-[125px] shadow">
+         {/* chart Status W302 */}
+         <h3 className="text-xs font-bold text-gray-700 mb-1">
+           COMPOSITE WS1
+         </h3>
+
+         <PieChart width={90} height={80}>
+           <Pie
+             data={chartDataCs1}
+             dataKey="value"
+             nameKey="name"
+             cx="50%"
+             cy="50%"
+             innerRadius={20}
+             outerRadius={40}
+             paddingAngle={2}
+           >
+             {chartDataCs1.map((entry, index) => (
+               <Cell key={`cell-${index}`} fill={entry.color} />
+             ))}
+             {/* Label di tengah donut */}
+             <Label
+               value={`${closedPercentageCs1}%`}
+               position="center"
+               style={{
+                 fontSize: '14px',
+                 fontWeight: 'bold',
+                 fill: '#374151', // abu tua
+               }}
+             />
+           </Pie>
+           <Tooltip
+             formatter={(value: number, name: string) => [
+               `${value}`,
+               `${name}`,
+             ]}
+             itemStyle={{ fontSize: '11px' }}
+           />
+         </PieChart>
+       </div>
+
+       <div className="flex flex-col items-center border py-2 px-2 rounded-[10px] w-[125px] shadow">
+         {/* chart Status W303 */}
+         <h3 className="text-xs font-bold text-gray-700 mb-1">
+           MACHINING WS1
+         </h3>
+
+         <PieChart width={90} height={80}>
+           <Pie
+             data={chartDataMw}
+             dataKey="value"
+             nameKey="name"
+             cx="50%"
+             cy="50%"
+             innerRadius={20}
+             outerRadius={40}
+             paddingAngle={2}
+           >
+             {chartDataCs1.map((entry, index) => (
+               <Cell key={`cell-${index}`} fill={entry.color} />
+             ))}
+             {/* Label di tengah donut */}
+             <Label
+               value={`${closedPercentageMw}%`}
+               position="center"
+               style={{
+                 fontSize: '14px',
+                 fontWeight: 'bold',
+                 fill: '#374151', // abu tua
+               }}
+             />
+           </Pie>
+           <Tooltip
+             formatter={(value: number, name: string) => [
+               `${value}`,
+               `${name}`,
+             ]}
+             itemStyle={{ fontSize: '11px' }}
+           />
+         </PieChart>
+       </div>
+
+       <div className="flex flex-col items-center border py-2 px-2 rounded-[10px] w-[125px] shadow">
+         {/* chart Status W304 */}
+         <h3 className="text-xs font-bold text-gray-700 mb-1">
+           SHEETMETAL H4
+         </h3>
+
+         <PieChart width={90} height={80}>
+           <Pie
+             data={chartDataSm4}
+             dataKey="value"
+             nameKey="name"
+             cx="50%"
+             cy="50%"
+             innerRadius={20}
+             outerRadius={40}
+             paddingAngle={2}
+           >
+             {chartDataSm4.map((entry, index) => (
+               <Cell key={`cell-${index}`} fill={entry.color} />
+             ))}
+             {/* Label di tengah donut */}
+             <Label
+               value={`${closedPercentageSm4}%`}
+               position="center"
+               style={{
+                 fontSize: '14px',
+                 fontWeight: 'bold',
+                 fill: '#374151', // abu tua
+               }}
+             />
+           </Pie>
+           <Tooltip
+             formatter={(value: number, name: string) => [
+               `${value}`,
+               `${name}`,
+             ]}
+             itemStyle={{ fontSize: '11px' }}
+           />
+         </PieChart>
+       </div>
+
+       <div className="flex flex-col items-center border py-2 px-2 rounded-[10px] w-[125px] shadow">
+         {/* chart Status W305 */}
+         <h3 className="text-xs font-bold text-gray-700 mb-1">
+           COMPOSITE H4
+         </h3>
+
+         <PieChart width={90} height={80}>
+           <Pie
+             data={chartDataCs4}
+             dataKey="value"
+             nameKey="name"
+             cx="50%"
+             cy="50%"
+             innerRadius={20}
+             outerRadius={40}
+             paddingAngle={2}
+           >
+             {chartDataCs4.map((entry, index) => (
+               <Cell key={`cell-${index}`} fill={entry.color} />
+             ))}
+             {/* Label di tengah donut */}
+             <Label
+               value={`${closedPercentageCs4}%`}
+               position="center"
+               style={{
+                 fontSize: '14px',
+                 fontWeight: 'bold',
+                 fill: '#374151', // abu tua
+               }}
+             />
+           </Pie>
+           <Tooltip
+             formatter={(value: number, name: string) => [
+               `${value}`,
+               `${name}`,
+             ]}
+             itemStyle={{ fontSize: '11px' }}
+           />
+         </PieChart>
+       </div>
+     </div>
+   </div>
+ </div>
 
         <div className="mb-2 flex flex-wrap gap-1 items-center">
           <div className="flex items-center ml-0">
@@ -1261,23 +1269,47 @@ export default function BUSH4() {
             <option value="Hangar 4">Hangar 4</option>
           </select>
 
-          <select
-            value={filterAcReg}
-            onChange={(e) => setFilterAcReg(e.target.value)}
-            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow"
-          >
-            {/* Opsi default selalu di atas */}
-            <option value="">All A/C Reg</option>
 
-            {/* Urutkan sisanya */}
-            {[...new Set(rows.map((r) => r.ac_reg).filter(Boolean))]
-              .sort((a, b) => a.localeCompare(b))
-              .map((reg) => (
-                <option key={reg} value={reg}>
-                  {reg}
-                </option>
-              ))}
-          </select>
+<div className="relative w-[90px]">
+            <input
+              type="text"
+              value={filterAcReg}
+              onChange={(e) => {
+                setFilterAcReg(e.target.value);
+                setShowSuggestions(true);
+              }}
+              onFocus={() => setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)} // Delay untuk biar sempat klik
+              placeholder="Filter A/C Reg"
+              className="border rounded px-1 py-1 text-[11px] w-full shadow"
+            />
+
+            {showSuggestions && (
+              <ul className="absolute z-50 bg-white border w-full max-h-40 overflow-y-auto text-[11px] shadow-md rounded">
+                <li
+                  className="px-2 py-1 hover:bg-gray-100 cursor-pointer"
+                  onMouseDown={() => setFilterAcReg('')}
+                >
+                  All A/C Reg
+                </li>
+                {filteredOptions.length === 0 && (
+                  <li className="px-2 py-1 text-gray-400">No match</li>
+                )}
+                {filteredOptions.map((reg) => (
+                  <li
+                    key={reg}
+                    className="px-2 py-1 hover:bg-blue-100 cursor-pointer"
+                    onMouseDown={() => {
+                      setFilterAcReg(reg);
+                      setShowSuggestions(false);
+                    }}
+                  >
+                    {reg}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
 
           <select
             value={filterDocStatus}

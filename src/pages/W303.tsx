@@ -226,6 +226,20 @@ export default function W303() {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 100;
 
+// filter ac reg
+const [showSuggestions, setShowSuggestions] = useState(false);
+
+// Ambil unique A/C Reg dari rows
+const uniqueAcRegs = [
+  ...new Set(rows.map((r) => r.ac_reg).filter(Boolean)),
+].sort((a, b) => a.localeCompare(b));
+
+// Filter opsi berdasarkan input
+const filteredOptions = uniqueAcRegs.filter((reg) =>
+  reg.toLowerCase().includes(filterAcReg.toLowerCase())
+);
+//////
+
   const filteredRows = rows.filter((row) => {
     const status = row.status_mw || '';
 
@@ -486,18 +500,47 @@ export default function W303() {
               />
 
               {/* ✈️ Filter A/C REG */}
-              <select
-                value={filterAcReg}
-                onChange={(e) => setFilterAcReg(e.target.value)}
-                className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow"
-              >
-                <option value="">All A/C Reg</option>
-                {[...new Set(rows.map((item) => item.ac_reg))].map((reg) => (
-                  <option key={reg} value={reg}>
+             
+<div className="relative w-[90px]">
+            <input
+              type="text"
+              value={filterAcReg}
+              onChange={(e) => {
+                setFilterAcReg(e.target.value);
+                setShowSuggestions(true);
+              }}
+              onFocus={() => setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)} // Delay untuk biar sempat klik
+              placeholder="Filter A/C Reg"
+              className="border rounded px-1 py-1 text-[11px] w-full shadow"
+            />
+
+            {showSuggestions && (
+              <ul className="absolute z-50 bg-white border w-full max-h-40 overflow-y-auto text-[11px] shadow-md rounded">
+                <li
+                  className="px-2 py-1 hover:bg-gray-100 cursor-pointer"
+                  onMouseDown={() => setFilterAcReg('')}
+                >
+                  All A/C Reg
+                </li>
+                {filteredOptions.length === 0 && (
+                  <li className="px-2 py-1 text-gray-400">No match</li>
+                )}
+                {filteredOptions.map((reg) => (
+                  <li
+                    key={reg}
+                    className="px-2 py-1 hover:bg-blue-100 cursor-pointer"
+                    onMouseDown={() => {
+                      setFilterAcReg(reg);
+                      setShowSuggestions(false);
+                    }}
+                  >
                     {reg}
-                  </option>
+                  </li>
                 ))}
-              </select>
+              </ul>
+            )}
+          </div>
 
               {/* 🔧 Filter Status */}
               <select
