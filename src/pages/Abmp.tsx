@@ -3,17 +3,38 @@ import { useEffect, useState } from 'react';
 export default function Abmp() {
   const [pdfId, setPdfId] = useState<string>('');
   const [message, setMessage] = useState<string>('');
+  const [lastUpdate, setLastUpdate] = useState<string>('');
 
   const sheetUrl =
     'https://docs.google.com/spreadsheets/d/e/2PACX-1vR87GYwPPCTGhIYZy-7p5SkOYqTaGpBUbbkvZTDRUMqDBOZvnhra6l4_N3O1PwKr2EL2qD9ReOb5Jac/pub?output=csv';
 
-  // Load ID dari localStorage saat halaman dibuka
-  useEffect(() => {
-    const savedId = localStorage.getItem('abmpPdfId');
-    if (savedId) {
-      setPdfId(savedId);
+  // Format tanggal ke dd-MMM-yyyy
+  const formatDate = (raw: string) => {
+    // Kalau angka serial Google Sheets
+    if (!isNaN(Number(raw))) {
+      const serial = Number(raw);
+      const baseDate = new Date(1899, 11, 30);
+      baseDate.setDate(baseDate.getDate() + serial);
+      return baseDate
+        .toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        })
+        .replace(/ /g, '-');
     }
-  }, []);
+
+    // Kalau string biasa
+    const date = new Date(raw);
+    if (isNaN(date.getTime())) return raw;
+    return date
+      .toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      })
+      .replace(/ /g, '-');
+  };
 
   // Update dari Google Sheet CSV
   const handleUpdate = async () => {
@@ -22,20 +43,31 @@ export default function Abmp() {
       const text = await res.text();
       const rows = text.split('\n').map((r) => r.split(','));
       const lastRow = rows[rows.length - 1];
-      if (lastRow && lastRow[2]) {
-        const newId = lastRow[2].trim();
-        setPdfId(newId);
-        localStorage.setItem('abmpPdfId', newId);
+
+      if (lastRow && lastRow[2] && lastRow[3]) {
+        const dateCol = lastRow[2].trim(); // kolom C = tanggal
+        const pdfCol = lastRow[3].trim(); // kolom D = PDF ID
+
+        setPdfId(pdfCol);
+        localStorage.setItem('abmpPdfId', pdfCol);
+
+        setLastUpdate(formatDate(dateCol));
+
         setMessage('✅ ABMP updated!');
-        setTimeout(() => setMessage(''), 3000); // hilang otomatis setelah 3 detik
+        setTimeout(() => setMessage(''), 3000);
       } else {
-        setMessage('⚠️ Tidak menemukan PDF ID di baris terakhir.');
+        setMessage('⚠️ Data tidak lengkap di baris terakhir.');
       }
     } catch (err) {
       console.error(err);
       setMessage('❌ Gagal mengambil data dari Google Sheet.');
     }
   };
+
+  // Ambil data langsung saat buka halaman
+  useEffect(() => {
+    handleUpdate();
+  }, []);
 
   const googleFormUrl = 'https://forms.gle/3KxHarsbBNLpeNE29';
   const pdfUrl = pdfId
@@ -44,7 +76,7 @@ export default function Abmp() {
 
   return (
     <div className="p-1 space-y-2">
-      {/* Baris tombol Upload + Update + Notifikasi */}
+      {/* Baris tombol Upload + Update + Info */}
       <div className="flex items-center gap-2">
         {/* Tombol Upload */}
         <a
@@ -56,6 +88,8 @@ export default function Abmp() {
           Upload ABMP
         </a>
 
+        
+
         {/* Tombol Update */}
         <button
           onClick={handleUpdate}
@@ -64,7 +98,14 @@ export default function Abmp() {
           Update
         </button>
 
-        {/* Notifikasi (sejajar di kanan tombol) */}
+{/* Last Update */}
+{lastUpdate && (
+          <span className="text-sm text-gray-700">
+            Last Update: <strong>{lastUpdate}</strong>
+          </span>
+        )}
+
+        {/* Notifikasi */}
         {message && (
           <span className="text-sm font-medium text-green-700 bg-green-100 px-3 py-1 rounded border border-green-300 shadow-sm">
             {message}
