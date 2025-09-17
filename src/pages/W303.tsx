@@ -408,8 +408,8 @@ const filteredOptions = uniqueAcRegs.filter((reg) =>
       year: 'numeric',
     });
 
-    const header = `*DAILY WORKLOAD REPORT*\n*MACHINING & WELDING*\nTBR-3 | ${shiftType}\n🗓️ ${today}`;
-    const summary = `\n\n*💡 TOTAL : ${totalOrder} ORDER*\n${totalOpen} OPEN | ${totalProgress} PROGRESS | ${totalClosed} CLOSED`;
+    const header = `*DAILY WORKLOAD REPORT*\n*MACHINING & WELDING*\nTBR-3 | ${shiftType}\n${today}`;
+    const summary = `\n\n*TOTAL : ${totalOrder} ORDER*\n${totalOpen} OPEN | ${totalProgress} PROGRESS | ${totalClosed} CLOSED`;
 
     const detail = orders
       .map(
@@ -655,7 +655,7 @@ const filteredOptions = uniqueAcRegs.filter((reg) =>
                 ).length;
 
                 const message = generateWhatsAppMessage({
-                  shiftType: 'MORNING SHIFT',
+                  shiftType: shiftOut,
                   totalOrder,
                   totalOpen,
                   totalProgress,
@@ -668,7 +668,7 @@ const filteredOptions = uniqueAcRegs.filter((reg) =>
                     remark: r.remark_mw || '',
                   })),
                   supervisor: supervisorOut,
-                  crew: 'CREW A',
+                  crew: crewOut,
                 });
 
                 const encoded = encodeURIComponent(message);

@@ -158,8 +158,9 @@ const COLUMN_ORDER = [
   { key: 'ac_reg', label: 'A/C Reg' },
   { key: 'order', label: 'Order' },
   { key: 'description', label: 'Description' },
-  { key: 'location', label: 'Location' },
   { key: 'doc_type', label: 'Doc' },
+  { key: 'location', label: 'Location' },
+  
   { key: 'date_in', label: 'Date In' },
   { key: 'doc_status', label: 'Doc Status' },
   { key: 'status_cs1', label: 'Status' },
@@ -416,8 +417,8 @@ const filteredOptions = uniqueAcRegs.filter((reg) =>
       year: 'numeric',
     });
 
-    const header = `*DAILY WORKLOAD REPORT*\n*COMPOSITE WORKSHOP-1*\nTBR-7 | ${shiftType}\n🗓️ ${today}`;
-    const summary = `\n\n*💡 TOTAL : ${totalOrder} ORDER*\n${totalOpen} OPEN | ${totalProgress} PROGRESS | ${totalClosed} CLOSED`;
+    const header = `*DAILY WORKLOAD REPORT*\n*COMPOSITE WORKSHOP-1*\nTBR-7 | ${shiftType}\n${today}`;
+    const summary = `\n\n*TOTAL : ${totalOrder} ORDER*\n${totalOpen} OPEN | ${totalProgress} PROGRESS | ${totalClosed} CLOSED`;
 
     const detail = orders
       .map(

@@ -152,8 +152,9 @@ const COLUMN_ORDER = [
   { key: 'ac_reg', label: 'A/C Reg' },
   { key: 'order', label: 'Order' },
   { key: 'description', label: 'Description' },
-  { key: 'location', label: 'Location' },
+ 
   { key: 'doc_type', label: 'Doc' },
+  { key: 'location', label: 'Location' },
   { key: 'date_in', label: 'Date In' },
   { key: 'doc_status', label: 'Doc Status' },
   { key: 'status_cs4', label: 'Status' },
@@ -410,8 +411,8 @@ const filteredOptions = uniqueAcRegs.filter((reg) =>
       year: 'numeric',
     });
 
-    const header = `*DAILY WORKLOAD REPORT*\n*COMPOSITE BUSH-4*\nTBR-6 | ${shiftType}\n🗓️ ${today}`;
-    const summary = `\n\n*💡 TOTAL : ${totalOrder} ORDER*\n${totalOpen} OPEN | ${totalProgress} PROGRESS | ${totalClosed} CLOSED`;
+    const header = `*DAILY WORKLOAD REPORT*\n*COMPOSITE BUSH-4*\nTBR-6 | ${shiftType}\n${today}`;
+    const summary = `\n\n*TOTAL : ${totalOrder} ORDER*\n${totalOpen} OPEN | ${totalProgress} PROGRESS | ${totalClosed} CLOSED`;
 
     const detail = orders
       .map(
@@ -656,7 +657,7 @@ const filteredOptions = uniqueAcRegs.filter((reg) =>
                 ).length;
 
                 const message = generateWhatsAppMessage({
-                  shiftType: 'MORNING SHIFT',
+                  shiftType: shiftOut,
                   totalOrder,
                   totalOpen,
                   totalProgress,
@@ -669,7 +670,7 @@ const filteredOptions = uniqueAcRegs.filter((reg) =>
                     remark: r.remark_cs4 || '',
                   })),
                   supervisor: supervisorOut,
-                  crew: 'CREW A',
+                  crew: crewOut,
                 });
 
                 const encoded = encodeURIComponent(message);
