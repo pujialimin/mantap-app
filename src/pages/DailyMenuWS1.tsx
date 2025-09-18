@@ -244,7 +244,7 @@ const getStatusJob = (row: Row): string => {
   return '';
 };
 
-const FILTERED_PLNTWKCNTR = ['ON A/C', 'BUSH4', 'WS1', 'CGK'];
+const FILTERED_PLNTWKCNTR = ['CGK', 'GAH1', 'GAH2', 'GAH3', 'WSST', 'WS1'];
 
 const sortOptions = [
   { value: 'ac_reg', label: 'A/C Reg' },

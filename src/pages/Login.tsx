@@ -26,16 +26,19 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-t from-[#00838F] to-[#00838F] ">
+    <div
+      className="min-h-screen flex items-center justify-center bg-cover bg-center"
+      style={{ backgroundImage: "url('/back.png')" }}
+    >
       <form
         onSubmit={handleLogin}
-        className="bg-white p-6 rounded shadow-md w-80 space-y-4"
+        className="bg-white p-4 rounded-[10px] shadow-md w-[280px] space-y-3"
       >
         <h2 className="text-xl font-semibold text-center">Login</h2>
         <input
           type="email"
           placeholder="Email"
-          className="w-full border p-2 rounded"
+          className="w-full border p-1 rounded"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -43,7 +46,7 @@ export default function Login() {
         <input
           type="password"
           placeholder="Password"
-          className="w-full border p-2 rounded"
+          className="w-full border p-1 rounded"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
@@ -51,11 +54,12 @@ export default function Login() {
         {error && <p className="text-red-500 text-sm">{error}</p>}
         <button
           type="submit"
-          className="w-full bg-gradient-to-t from-[#00838F] to-[#00838F]  text-white p-2 rounded hover:bg-green-600"
+          className="w-full bg-gradient-to-t from-[#00838F] to-[#00838F] text-white p-2 rounded hover:bg-green-600"
         >
           Sign In
         </button>
       </form>
     </div>
   );
+  
 }
