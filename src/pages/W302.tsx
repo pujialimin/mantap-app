@@ -250,29 +250,30 @@ const filteredOptions = uniqueAcRegs.filter((reg) =>
 );
 //////
 
-  const filteredRows = rows.filter((row) => {
-    const status = row.status_cs1 || '';
+const filteredRows = rows.filter((row) => {
+  const status = row.status_cs4 || '';
 
-    const matchesAcReg = row.ac_reg
-      ?.toLowerCase()
-      .includes(filterAcReg.toLowerCase());
+  const matchesAcReg = row.ac_reg
+    ?.toLowerCase()
+    .includes(filterAcReg.toLowerCase());
 
-    const matchesStatus =
-      filterStatus === 'All Status'
-        ? true
-        : filterStatus === 'NO STATUS'
-        ? status === ''
-        : status === filterStatus;
+  const matchesStatus =
+    filterStatus === 'All Status'
+      ? true
+      : filterStatus === 'NO STATUS'
+      ? status === ''
+      : status === filterStatus;
 
-    const searchLower = searchTerm.toLowerCase();
-    const matchesSearch =
-      row.ac_reg?.toLowerCase().includes(searchLower) ||
-      row.order?.toLowerCase().includes(searchLower) ||
-      row.description?.toLowerCase().includes(searchLower) ||
-      row.location?.toLowerCase().includes(searchLower);
+  const searchLower = searchTerm.toLowerCase();
+  const matchesSearch =
+    row.ac_reg?.toLowerCase().includes(searchLower) ||
+    row.order?.toString().toLowerCase().includes(searchLower) || // ✅ fix disini
+    row.description?.toLowerCase().includes(searchLower) ||
+    row.location?.toLowerCase().includes(searchLower);
 
-    return matchesAcReg && matchesStatus && matchesSearch;
-  });
+  return matchesAcReg && matchesStatus && matchesSearch;
+});
+
 
   const sortedFilteredRows = [...filteredRows].sort((a, b) => {
     if (!sortKey) return 0;
