@@ -14,11 +14,11 @@ type Row = {
 const DOC_STATUS_OPTIONS = [
   '🔴NEED RO',
   '🔴WAIT.REMOVE',
+  '🔴WAIT.BDP',
   '🟢COMPLETED',
   '🟢DONE BY SOA',
   '🟡RO DONE',
   '🟡EVALUATED',
-  '🟡WAIT.BDP',
   '🟡CONTACT OEM',
   '🟡HOLD',
   '🟡RESTAMP',
@@ -78,7 +78,7 @@ const COLUMN_ORDER: { key: string; label: string }[] = [
   { key: 'location', label: 'Location' },
   { key: 'date_in', label: 'Date In' },
   { key: 'doc_status', label: 'Doc Status' },
-
+  { key: 'remark', label: 'Remark' },
   { key: 'cek_sm1', label: 'W301' },
 
   { key: 'cek_cs1', label: 'W302' },
@@ -89,7 +89,7 @@ const COLUMN_ORDER: { key: string; label: string }[] = [
   { key: 'tjo', label: 'TJO' },
   { key: 'other', label: 'TV/TC' },
   { key: 'status_job', label: 'STATUS JOB' },
-  { key: 'remark', label: 'Remark' },
+  
   { key: 'sp', label: 'SP' },
   { key: 'loc_doc', label: 'Loc Doc/Part' },
   { key: 'date_out', label: 'Date Out' },
@@ -152,11 +152,10 @@ const getStatusPE = (
   status_cs4?: string,
   status_mw?: string
 ): string => {
-  const openStatuses = ['🔴NEED RO', '🔴WAIT.REMOVE'];
+  const openStatuses = ['🔴NEED RO', '🔴WAIT.REMOVE', '🔴WAIT.BDP'];
   const progressStatuses = [
     '🟡RO DONE',
     '🟡EVALUATED',
-    '🟡WAIT.BDP',
     '🟡CONTACT OEM',
     '🟡HOLD',
     '🟡RESTAMP',

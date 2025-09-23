@@ -14,11 +14,11 @@ type Row = {
 const DOC_STATUS_OPTIONS = [
   '🔴NEED RO',
   '🔴WAIT.REMOVE',
+  '🔴WAIT.BDP',
   '🟢COMPLETED',
   '🟢DONE BY SOA',
   '🟡RO DONE',
   '🟡EVALUATED',
-  '🟡WAIT.BDP',
   '🟡CONTACT OEM',
   '🟡HOLD',
   '🟡RESTAMP',
@@ -152,11 +152,10 @@ const getStatusPE = (
   status_cs4?: string,
   status_mw?: string
 ): string => {
-  const openStatuses = ['🔴NEED RO', '🔴WAIT.REMOVE'];
+  const openStatuses = ['🔴NEED RO', '🔴WAIT.REMOVE','🔴WAIT.BDP'];
   const progressStatuses = [
     '🟡RO DONE',
     '🟡EVALUATED',
-    '🟡WAIT.BDP',
     '🟡CONTACT OEM',
     '🟡HOLD',
     '🟡RESTAMP',

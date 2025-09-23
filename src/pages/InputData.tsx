@@ -8,11 +8,11 @@ const DOC_TYPES = ['JC', 'MDR', 'PDS', 'SOA'];
 const DOC_STATUS_OPTIONS = [
   '🔴NEED RO',
   '🔴WAIT.REMOVE',
+  '🔴WAIT.BDP',
   '🟢COMPLETED',
   '🟢DONE BY SOA',
   '🟡RO DONE',
   '🟡EVALUATED',
-  '🟡WAIT.BDP',
   '🟡CONTACT OEM',
   '🟡HOLD',
   '🟡RESTAMP',
@@ -29,7 +29,7 @@ const getStatusPE = (doc_status: string): string => {
   const progressStatus = [
     
     '🟡EVALUATED',
-    '🟡WAIT.BDP',
+    
     '🟡CONTACT OEM',
     '🟡HOLD',
     '🟡RESTAMP',
@@ -46,7 +46,7 @@ const getStatusPE = (doc_status: string): string => {
     '🔘ROBBING',
   ];
 
-  if (['🟡RO DONE', '🔴NEED RO', '🔴WAIT.REMOVE'].includes(doc_status)) return 'OPEN';
+  if (['🟡RO DONE', '🔴NEED RO', '🔴WAIT.REMOVE', '🔴WAIT.BDP'].includes(doc_status)) return 'OPEN';
   if (progressStatus.includes(doc_status)) return 'PROGRESS';
   if (closedStatus.includes(doc_status)) return 'CLOSED';
   return '';
@@ -79,12 +79,11 @@ const getStatusJob = (row: any): string => {
   if (values.includes('CLOSED')) return 'CLOSED';
   return '';
 };
-
 const emptyRow = {
-  ac_reg: '', // Tambah iniac_reg: '',
-  order: '',
+  ac_reg: '',
+  order: null as number | null, // biar sesuai integer
   description: '',
-  plntwkcntr: '', // Tambah ini
+  plntwkcntr: '',
   doc_type: '',
   location: '',
   doc_status: '',
@@ -142,7 +141,6 @@ const [rows, setRows] = useState<Row[]>([]);
   };
 
   
-  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -150,11 +148,21 @@ const [rows, setRows] = useState<Row[]>([]);
   
     const requiredKeys = ['ac_reg', 'order', 'description', 'plntwkcntr', 'doc_type', 'doc_status'];
   
-    // Validasi
+    // 🔎 Validasi
     for (let i = 0; i < forms.length; i++) {
       const row = forms[i];
-      const isAnyFilled = requiredKeys.some((key) => (row[key] || '').trim() !== '');
-      const isAnyMissing = requiredKeys.some((key) => (row[key] || '').trim() === '');
+  
+      // Cek apakah ada field yang terisi
+      const isAnyFilled = requiredKeys.some((key) => {
+        if (key === 'order') return row.order !== null; // khusus order (integer)
+        return (row[key] || '').trim() !== '';
+      });
+  
+      // Cek apakah ada field yang kosong
+      const isAnyMissing = requiredKeys.some((key) => {
+        if (key === 'order') return row.order === null; // khusus order (integer)
+        return (row[key] || '').trim() === '';
+      });
   
       if (isAnyFilled && isAnyMissing) {
         setMessage(`❌ Baris ${i + 1} belum lengkap. Semua field wajib diisi jika salah satunya diisi.`);
@@ -164,7 +172,12 @@ const [rows, setRows] = useState<Row[]>([]);
     }
   
     const dataToInsert = forms
-      .filter((row) => requiredKeys.every((key) => (row[key] || '').trim() !== ''))
+      .filter((row) =>
+        requiredKeys.every((key) => {
+          if (key === 'order') return row.order !== null;
+          return (row[key] || '').trim() !== '';
+        })
+      )
       .map((row) => ({ ...row, status_job: getStatusJob(row) }));
   
     if (dataToInsert.length === 0) {
@@ -173,32 +186,37 @@ const [rows, setRows] = useState<Row[]>([]);
       return;
     }
   
-    // ✅ Cek order duplikat di database (gunakan .or() karena kolom bertipe text)
-    const orderList = dataToInsert.map((row) => String(row.order).trim());
-    const orFilter = orderList.map((o) => `order.eq.${o}`).join(',');
-  
-    let existingOrders: any[] = [];
-    let checkError = null;
-  
-    if (orderList.length > 0) {
-      const { data, error } = await supabase
-        .from('mdr_tracking')
-        .select('order')
-        .or(orFilter);
-      existingOrders = data || [];
-      checkError = error;
-    }
-  
-    if (checkError) {
-      console.error('Gagal memeriksa order duplikat:', checkError);
-      setMessage(`❌ Gagal memeriksa order duplikat: ${checkError.message}`);
-      setLoading(false);
-      return;
-    }
+    // ✅ Cek order duplikat di database (sekarang integer)
+ // ambil semua order dari data yang diinput
+const orderList = dataToInsert
+.map((row) => Number(row.order))
+.filter((val) => !isNaN(val));
+
+console.log("orderList:", orderList);
+
+let existingOrders: any[] = [];
+let checkError = null;
+
+if (orderList.length > 0) {
+const { data, error } = await supabase
+  .from("mdr_tracking")
+  .select('"order"')              // ✅ quote karena reserved keyword
+  .in('"order"', orderList);      // ✅ quote juga di filter
+
+existingOrders = data || [];
+checkError = error;
+}
+
+if (checkError) {
+console.error("Gagal memeriksa order duplikat:", checkError);
+return;
+}
+
+console.log("Existing orders:", existingOrders);
   
     const existingOrderSet = new Set(existingOrders.map((item) => item.order));
-    const finalDataToInsert = dataToInsert.filter((row) => !existingOrderSet.has(String(row.order)));
-    const duplicatedData = dataToInsert.filter((row) => existingOrderSet.has(String(row.order)));
+    const finalDataToInsert = dataToInsert.filter((row) => !existingOrderSet.has(row.order));
+    const duplicatedData = dataToInsert.filter((row) => existingOrderSet.has(row.order));
   
     if (finalDataToInsert.length === 0) {
       setMessage('❌ Semua order sudah ada di database. Tidak ada yang disimpan.');
@@ -212,7 +230,11 @@ const [rows, setRows] = useState<Row[]>([]);
       console.error('Insert error:', insertError);
       setMessage('❌ Gagal menyimpan data.');
     } else {
-      setMessage(`✅ ${finalDataToInsert.length} data berhasil disimpan.${duplicatedData.length > 0 ? ` ${duplicatedData.length} order duplikat tidak disimpan.` : ''}`);
+      setMessage(
+        `✅ ${finalDataToInsert.length} data berhasil disimpan.${
+          duplicatedData.length > 0 ? ` ${duplicatedData.length} order duplikat tidak disimpan.` : ''
+        }`
+      );
   
       const newForms = duplicatedData.length > 0 ? duplicatedData : [{ ...emptyRow }];
       setForms(newForms);
@@ -223,20 +245,19 @@ const [rows, setRows] = useState<Row[]>([]);
   
   
   
-  
   useEffect(() => {
     const handleGlobalPaste = (e: ClipboardEvent) => {
       const text = e.clipboardData?.getData('text/plain') || '';
       const lines = text.trim().split('\n');
-
+  
       // Hanya tangani jika lebih dari 1 baris
       if (lines.length <= 1) return;
-
+  
       const rows = lines.map((line) => line.split('\t'));
-
+  
       const newForms = rows.map((cells) => ({
         ac_reg: cells[0] || '',
-        order: cells[1] || '',
+        order: cells[1] ? Number(cells[1]) : null, // ✅ convert ke number/null
         description: cells[2] || '',
         plntwkcntr: cells[3] || '',
         doc_type: cells[4] || '',
@@ -244,72 +265,64 @@ const [rows, setRows] = useState<Row[]>([]);
         doc_status: cells[6] || '',
         status_pe: getStatusPE(cells[6] || ''),
       }));
-
+  
       setForms(newForms); // ✅ langsung tampilkan hasil paste
-
+  
       e.preventDefault();
     };
-
+  
     document.addEventListener('paste', handleGlobalPaste);
     return () => document.removeEventListener('paste', handleGlobalPaste);
   }, []);
-
+  
   const handlePasteCell = (
     e: React.ClipboardEvent<HTMLInputElement | HTMLTextAreaElement>,
     rowIndex: number,
     colName: string
   ) => {
     e.preventDefault();
-
+  
     const clipboard = e.clipboardData.getData('text/plain');
     const rows = clipboard
       .trim()
       .split('\n')
       .map((line) => line.split('\t'));
-
+  
     const newData = [...forms];
-
+  
     rows.forEach((cols, rowOffset) => {
       const targetIndex = rowIndex + rowOffset;
       if (targetIndex >= newData.length) return; // Lewat dari batas data
-
-      const colNames = [
-        
-        'ac_reg',
-        'order',
-        'description',
-        'plntwkcntr',
-        'doc_type',
-        'location',
-        'doc_status',
-      ];
-
+  
       const startIndex = FIELD_ORDER.indexOf(colName);
       if (startIndex === -1) return;
-
+  
       cols.forEach((value, colOffset) => {
         const fieldName = FIELD_ORDER[startIndex + colOffset];
         if (fieldName && newData[targetIndex]) {
-          newData[targetIndex][fieldName] = value;
-
+          if (fieldName === 'order') {
+            newData[targetIndex][fieldName] = value ? Number(value) : null; // ✅ convert ke number/null
+          } else {
+            newData[targetIndex][fieldName] = value;
+          }
+  
           if (fieldName === 'doc_status') {
             newData[targetIndex]['status_pe'] = getStatusPE(value);
           }
         }
       });
     });
-
+  
     setForms(newData);
   };
-
-
+  
   const applyToAll = (column: keyof Row, value: string) => {
     setForms((prevForms) =>
       prevForms.map((row) => {
-        const isOrderFilled = (row.order || '').trim() !== '';
+        const isOrderFilled = row.order !== null; // ✅ cek integer/null
         if (!isOrderFilled) return row;
   
-        const updatedRow = { ...row, [column]: value };
+        const updatedRow: Row = { ...row, [column]: value };
   
         // Jika mengubah doc_status, update status_pe juga
         if (column === 'doc_status') {
@@ -470,23 +483,26 @@ const [rows, setRows] = useState<Row[]>([]);
                       className="border rounded px-2 py-1 w-full"
                     />
                   </td>
+{/* Order */}
+<td className="border px-2 py-1 min-w-[110px]">
+  <input
+    ref={(el) => {
+      if (!inputRefs.current[index]) inputRefs.current[index] = [];
+      inputRefs.current[index][1] = el;
+    }}
+    type="number" // ✅ lebih aman pakai number
+    name="order"
+    value={row.order !== null ? row.order : ''} // ✅ tampilkan '' kalau null
+    onChange={(e) => {
+      const val = e.target.value.trim();
+      const num = val === '' ? null : Number(val);
+      handleChange({ target: { name: 'order', value: num } } as any, index); // ✅ kirim number/null ke state
+    }}
+    onPaste={(e) => handlePasteCell(e, index, 'order')}
+    className="border rounded px-2 py-1 w-full"
+  />
+</td>
 
-                  {/* Order */}
-                  <td className="border px-2 py-1 min-w-[110px]">
-                    <input
-                      ref={(el) => {
-                        if (!inputRefs.current[index])
-                          inputRefs.current[index] = [];
-                        inputRefs.current[index][1] = el;
-                      }}
-                      type="text"
-                      name="order"
-                      value={row.order}
-                      onChange={(e) => handleChange(e, index)}
-                      onPaste={(e) => handlePasteCell(e, index, 'order')}
-                      className="border rounded px-2 py-1 w-full"
-                    />
-                  </td>
 
                   {/* Description */}
                   <td className="border px-2 py-1 min-w-[400px]">
