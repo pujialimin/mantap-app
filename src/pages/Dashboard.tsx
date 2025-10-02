@@ -215,6 +215,11 @@ const sortOptions = [
   { value: 'plntwkcntr', label: 'Plntwkcntr' },
 ];
 
+type OrderFilter = {
+  value: string;
+  valid: boolean;
+};
+
 export default function BUSH4() {
   const [rows, setRows] = useState<Row[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -242,19 +247,58 @@ export default function BUSH4() {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 100;
 
-// filter ac reg
-const [showSuggestions, setShowSuggestions] = useState(false);
+  // filter ac reg
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
-// Ambil unique A/C Reg dari rows
-const uniqueAcRegs = [
-  ...new Set(rows.map((r) => r.ac_reg).filter(Boolean)),
-].sort((a, b) => a.localeCompare(b));
+  const [filterOrders, setFilterOrders] = useState<string[]>([]);
+  const [orderInput, setOrderInput] = useState('');
+  const [orderSuggestions, setOrderSuggestions] = useState<string[]>([]);
+  const [showOrderSuggestions, setShowOrderSuggestions] = useState(false);
 
-// Filter opsi berdasarkan input
-const filteredOptions = uniqueAcRegs.filter((reg) =>
-  reg.toLowerCase().includes(filterAcReg.toLowerCase())
-);
-//////
+  useEffect(() => {
+    if (orderInput.trim() === '') {
+      setOrderSuggestions([]);
+      return;
+    }
+
+    const uniqueOrders = Array.from(new Set(rows.map((r) => String(r.order))));
+
+    const filtered = uniqueOrders.filter((ord) =>
+      ord.toLowerCase().includes(orderInput.toLowerCase())
+    );
+
+    setOrderSuggestions(filtered.slice(0, 10)); // batasi max 10
+  }, [orderInput, rows]);
+
+  const handleAddOrder = (order: string) => {
+    const normalized = String(order).trim();
+    if (normalized === '') return;
+
+    const alreadyExist = filterOrders.some((o) => o.value === normalized);
+    if (alreadyExist) return;
+
+    // ✅ cek valid atau tidak
+    const isValid = rows.some((r) => String(r.order) === normalized);
+
+    setFilterOrders((prev) => [...prev, { value: normalized, valid: isValid }]);
+    setOrderInput('');
+    setShowOrderSuggestions(false);
+  };
+
+  const handleRemoveOrder = (order: string) => {
+    setFilterOrders(filterOrders.filter((o) => o.value !== order));
+  };
+
+  // Ambil unique A/C Reg dari rows
+  const uniqueAcRegs = [
+    ...new Set(rows.map((r) => r.ac_reg).filter(Boolean)),
+  ].sort((a, b) => a.localeCompare(b));
+
+  // Filter opsi berdasarkan input
+  const filteredOptions = uniqueAcRegs.filter((reg) =>
+    reg.toLowerCase().includes(filterAcReg.toLowerCase())
+  );
+  //////
 
   const confirmAction = (action: () => void) => {
     setPendingAction(() => action);
@@ -411,6 +455,11 @@ const filteredOptions = uniqueAcRegs.filter((reg) =>
     .filter((row) => {
       if (showOnlyChecked && !selectedRows.includes(row.id)) return false;
 
+      // khusus filter order multiple
+      const matchesOrder =
+        filterOrders.length === 0 ||
+        filterOrders.some((o) => o.value === String(row.order));
+
       const matchesSearch = Object.values(row)
         .join(' ')
         .toLowerCase()
@@ -454,6 +503,7 @@ const filteredOptions = uniqueAcRegs.filter((reg) =>
           : true;
 
       return (
+        matchesOrder &&
         matchesSearch &&
         matchesAcReg &&
         matchesDocStatus &&
@@ -879,321 +929,378 @@ const filteredOptions = uniqueAcRegs.filter((reg) =>
   return (
     <div className="bg-gray-100 w-full h-full">
       <div className="bg-white px-3 pt-3 pb-6 max-h-[280vh] overflow-hidden w-full rounded-lg">
-         {/* 📊 Status Summary dan Donut Chart */}
-         <div className="flex gap-4 items-start w-full mb-2">
+        {/* 📊 Status Summary dan Donut Chart */}
+        <div className="flex gap-4 items-start w-full mb-2">
+          {/* 🔹 Kiri: List Status DOC */}
+          <div className="flex flex-col border rounded-[10px] shadow w-64 h-[187px] flex-1 max-w-[400px]">
+            {/* Header dengan background berwarna */}
+            <div className="flex justify-between items-center w-full px-4  bg-[#7864bc] rounded-t-[10px]">
+              <h3 className="text-white py-0 font-bold">STATUS DOCUMENT</h3>
+              <span className="text-sm font-bold text-white">
+                {(
+                  (docStatusCounts
+                    .filter(
+                      (d) => d.name.includes('🟢') || d.name.includes('🟘')
+                    )
+                    .reduce((acc, d) => acc + d.value, 0) /
+                    (totalDocStatus || 1)) *
+                  100
+                ).toFixed(0)}
+                %
+              </span>
+            </div>
 
-{/* 🔹 Kiri: List Status DOC */}
-<div className="flex flex-col border rounded-[10px] shadow w-64 h-[187px]">
-{/* Header dengan background berwarna */}
-<div className="flex justify-between items-center w-full px-4  bg-[#7864bc] rounded-t-[10px]">
-<h3 className="text-white py-0 font-bold">STATUS DOCUMENT</h3>
-<span className="text-sm font-bold text-white">
-{(
- (docStatusCounts
-   .filter(
-     (d) => d.name.includes("🟢") || d.name.includes("🟘")
-   )
-   .reduce((acc, d) => acc + d.value, 0) /
-   (totalDocStatus || 1)) *
- 100
-).toFixed(0)}%
-</span>
-</div>
+            {/* Daftar scrollable dengan garis pembatas */}
+            <ul className="w-full max-h-full overflow-y-auto text-xs divide-y divide-gray-200">
+              {docStatusCounts.map((entry, index) => (
+                <li
+                  key={index}
+                  className="flex justify-between items-center px-2 py-1"
+                >
+                  <span>{entry.name}</span>
+                  <span className="font-semibold text-gray-700">
+                    {entry.value}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-{/* Daftar scrollable dengan garis pembatas */}
-<ul className="w-full max-h-full overflow-y-auto text-xs divide-y divide-gray-200">
-{docStatusCounts.map((entry, index) => (
-<li
- key={index}
- className="flex justify-between items-center px-2 py-1"
->
- <span>{entry.name}</span>
- <span className="font-semibold text-gray-700">{entry.value}</span>
-</li>
-))}
-</ul>
-</div>
+          {/* 🔹 Kanan: Kotak + PieChart W301-W305 */}
+          <div className="flex flex-col flex-1 gap-3 ">
+            {/* Baris 1: Kotak Status */}
+            <div className="flex flex-wrap gap-3 ">
+              {/* PERCENTAGE */}
+              <div className="border rounded-[10px] overflow-hidden text-center w-[125px] h-14 shadow flex-1  min-w-fit max-w-[200px]">
+                <div className="bg-blue-500 text-white py-0 font-bold">
+                  PERCENT
+                </div>
+                <div className="bg-white text-blue-500 text-lg font-bold py-0 text-center">
+                  {(
+                    (statusCounts.CLOSED /
+                      (statusCounts.OPEN +
+                        statusCounts.PROGRESS +
+                        statusCounts.CLOSED || 1)) *
+                    100
+                  ).toFixed(0)}
+                  %
+                </div>
+              </div>
 
+              {/* OPEN */}
+              <div className="border rounded-[10px] overflow-hidden text-center w-[125px] h-14 shadow flex-1  min-w-fit max-w-[200px]">
+                <div className="bg-red-500 text-white py-0 font-bold">OPEN</div>
+                <div className="bg-white text-red-500 text-lg font-bold py-0 text-center">
+                  {statusCounts.OPEN}
+                </div>
+              </div>
 
+              {/* PROGRESS */}
+              <div className="border rounded-[10px] overflow-hidden text-center w-[125px] h-14 shadow flex-1  min-w-fit max-w-[200px]">
+                <div className="bg-yellow-500 text-white py-0 font-bold">
+                  PROGRESS
+                </div>
+                <div className="bg-white text-yellow-500 text-lg font-bold py-0 text-center">
+                  {statusCounts.PROGRESS}
+                </div>
+              </div>
 
+              {/* CLOSED */}
+              <div className="border rounded-[10px] overflow-hidden text-center w-[125px] h-15 shadow flex-1 min-w-fit  max-w-[200px]">
+                <div className="bg-green-500 text-white py-0 font-bold">
+                  CLOSED
+                </div>
+                <div className="bg-white text-green-500 text-lg font-bold py-0 text-center">
+                  {statusCounts.CLOSED}
+                </div>
+              </div>
 
+              {/* TOTAL */}
+              <div className="border rounded-[10px] overflow-hidden text-center w-[125px] h-14 shadow flex-1 min-w-fit max-w-[200px]">
+                <div className="bg-[#e36b45] text-white py-0 font-bold">
+                  TOTAL
+                </div>
+                <div className="bg-white text-gray-700 text-lg font-bold py-0 text-center">
+                  {statusCounts.OPEN +
+                    statusCounts.PROGRESS +
+                    statusCounts.CLOSED}
+                </div>
+              </div>
+            </div>
 
-   {/* 🔹 Kanan: Kotak + PieChart W301-W305 */}
-   <div className="flex flex-col flex-1 gap-3">
-     {/* Baris 1: Kotak Status */}
-     <div className="flex flex-wrap gap-3">
-       {/* PERCENTAGE */}
-       <div className="border rounded-[10px] overflow-hidden text-center w-[125px] h-14 shadow">
-         <div className="bg-blue-500 text-white py-0 font-bold">
-           PERCENT
-         </div>
-         <div className="bg-white text-blue-500 text-lg font-bold py-0 text-center">
-           {(
-             (statusCounts.CLOSED /
-               (statusCounts.OPEN +
-                 statusCounts.PROGRESS +
-                 statusCounts.CLOSED || 1)) *
-             100
-           ).toFixed(0)}
-           %
-         </div>
-       </div>
+            {/* Baris 2: Chart Status W301-W305 */}
+            <div className="flex flex-wrap gap-3">
+              {/* Status W301 */}
+              <div className="flex flex-col items-center border py-2 px-2 rounded-[10px] w-[125px] shadow flex-1 min-w-fit max-w-[200px]">
+                <h3 className="text-xs font-bold text-gray-700 mb-1">
+                  SHEETMETAL WS1
+                </h3>
+                <PieChart width={94} height={80}>
+                  <Pie
+                    data={chartDataSm1}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={20}
+                    outerRadius={40}
+                    paddingAngle={2}
+                  >
+                    {chartDataSm1.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                    <Label
+                      value={`${closedPercentageSm1}%`}
+                      position="center"
+                      style={{
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                        fill: '#374151',
+                      }}
+                    />
+                  </Pie>
+                  <Tooltip
+                    formatter={(value: number, name: string) => [
+                      `${value}`,
+                      `${name}`,
+                    ]}
+                    itemStyle={{ fontSize: '11px' }}
+                  />
+                </PieChart>
+              </div>
 
-       
+              <div className="flex flex-col items-center border py-2 px-2 rounded-[10px] w-[125px] shadow flex-1 min-w-fit max-w-[200px]">
+                {/* chart Status W302 */}
+                <h3 className="text-xs font-bold text-gray-700 mb-1">
+                  COMPOSITE WS1
+                </h3>
 
-       
+                <PieChart width={90} height={80}>
+                  <Pie
+                    data={chartDataCs1}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={20}
+                    outerRadius={40}
+                    paddingAngle={2}
+                  >
+                    {chartDataCs1.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                    {/* Label di tengah donut */}
+                    <Label
+                      value={`${closedPercentageCs1}%`}
+                      position="center"
+                      style={{
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                        fill: '#374151', // abu tua
+                      }}
+                    />
+                  </Pie>
+                  <Tooltip
+                    formatter={(value: number, name: string) => [
+                      `${value}`,
+                      `${name}`,
+                    ]}
+                    itemStyle={{ fontSize: '11px' }}
+                  />
+                </PieChart>
+              </div>
 
-       {/* OPEN */}
-       <div className="border rounded-[10px] overflow-hidden text-center w-[125px] h-14 shadow">
-         <div className="bg-red-500 text-white py-0 font-bold">OPEN</div>
-         <div className="bg-white text-red-500 text-lg font-bold py-0 text-center">
-           {statusCounts.OPEN}
-         </div>
-       </div>
+              <div className="flex flex-col items-center border py-2 px-2 rounded-[10px] w-[125px] shadow flex-1 min-w-fit max-w-[200px]">
+                {/* chart Status W303 */}
+                <h3 className="text-xs font-bold text-gray-700 mb-1">
+                  MACHINING WS1
+                </h3>
 
-       {/* PROGRESS */}
-       <div className="border rounded-[10px] overflow-hidden text-center w-[125px] h-14 shadow">
-         <div className="bg-yellow-500 text-white py-0 font-bold">
-           PROGRESS
-         </div>
-         <div className="bg-white text-yellow-500 text-lg font-bold py-0 text-center">
-           {statusCounts.PROGRESS}
-         </div>
-       </div>
+                <PieChart width={90} height={80}>
+                  <Pie
+                    data={chartDataMw}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={20}
+                    outerRadius={40}
+                    paddingAngle={2}
+                  >
+                    {chartDataCs1.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                    {/* Label di tengah donut */}
+                    <Label
+                      value={`${closedPercentageMw}%`}
+                      position="center"
+                      style={{
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                        fill: '#374151', // abu tua
+                      }}
+                    />
+                  </Pie>
+                  <Tooltip
+                    formatter={(value: number, name: string) => [
+                      `${value}`,
+                      `${name}`,
+                    ]}
+                    itemStyle={{ fontSize: '11px' }}
+                  />
+                </PieChart>
+              </div>
 
-       {/* CLOSED */}
-       <div className="border rounded-[10px] overflow-hidden text-center w-[125px] h-15 shadow">
-         <div className="bg-green-500 text-white py-0 font-bold">
-           CLOSED
-         </div>
-         <div className="bg-white text-green-500 text-lg font-bold py-0 text-center">
-           {statusCounts.CLOSED}
-         </div>
-       </div>
+              <div className="flex flex-col items-center border py-2 px-2 rounded-[10px] w-[125px] shadow flex-1 min-w-fit max-w-[200px]">
+                {/* chart Status W304 */}
+                <h3 className="text-xs font-bold text-gray-700 mb-1">
+                  SHEETMETAL H4
+                </h3>
 
-       {/* TOTAL */}
-       <div className="border rounded-[10px] overflow-hidden text-center w-[125px] h-14 shadow">
-         <div className="bg-[#e36b45] text-white py-0 font-bold">
-           TOTAL
-         </div>
-         <div className="bg-white text-gray-700 text-lg font-bold py-0 text-center">
-           {statusCounts.OPEN +
-             statusCounts.PROGRESS +
-             statusCounts.CLOSED}
-         </div>
-       </div>
+                <PieChart width={90} height={80}>
+                  <Pie
+                    data={chartDataSm4}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={20}
+                    outerRadius={40}
+                    paddingAngle={2}
+                  >
+                    {chartDataSm4.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                    {/* Label di tengah donut */}
+                    <Label
+                      value={`${closedPercentageSm4}%`}
+                      position="center"
+                      style={{
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                        fill: '#374151', // abu tua
+                      }}
+                    />
+                  </Pie>
+                  <Tooltip
+                    formatter={(value: number, name: string) => [
+                      `${value}`,
+                      `${name}`,
+                    ]}
+                    itemStyle={{ fontSize: '11px' }}
+                  />
+                </PieChart>
+              </div>
 
-     </div>
+              <div className="flex flex-col items-center border py-2 px-2 rounded-[10px] w-[125px] shadow flex-1 min-w-fit max-w-[200px]">
+                {/* chart Status W305 */}
+                <h3 className="text-xs font-bold text-gray-700 mb-1">
+                  COMPOSITE H4
+                </h3>
 
-     {/* Baris 2: Chart Status W301-W305 */}
-     <div className="flex flex-wrap gap-3">
-       {/* Status W301 */}
-       <div className="flex flex-col items-center border py-2 px-2 rounded-[10px] w-[125px] shadow">
-         <h3 className="text-xs font-bold text-gray-700 mb-1">
-           SHEETMETAL WS1
-         </h3>
-         <PieChart width={94} height={80}>
-           <Pie
-             data={chartDataSm1}
-             dataKey="value"
-             nameKey="name"
-             cx="50%"
-             cy="50%"
-             innerRadius={20}
-             outerRadius={40}
-             paddingAngle={2}
-           >
-             {chartDataSm1.map((entry, index) => (
-               <Cell key={`cell-${index}`} fill={entry.color} />
-             ))}
-             <Label
-               value={`${closedPercentageSm1}%`}
-               position="center"
-               style={{
-                 fontSize: '14px',
-                 fontWeight: 'bold',
-                 fill: '#374151',
-               }}
-             />
-           </Pie>
-           <Tooltip
-             formatter={(value: number, name: string) => [
-               `${value}`,
-               `${name}`,
-             ]}
-             itemStyle={{ fontSize: '11px' }}
-           />
-         </PieChart>
-       </div>
+                <PieChart width={90} height={80}>
+                  <Pie
+                    data={chartDataCs4}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={20}
+                    outerRadius={40}
+                    paddingAngle={2}
+                  >
+                    {chartDataCs4.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                    {/* Label di tengah donut */}
+                    <Label
+                      value={`${closedPercentageCs4}%`}
+                      position="center"
+                      style={{
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                        fill: '#374151', // abu tua
+                      }}
+                    />
+                  </Pie>
+                  <Tooltip
+                    formatter={(value: number, name: string) => [
+                      `${value}`,
+                      `${name}`,
+                    ]}
+                    itemStyle={{ fontSize: '11px' }}
+                  />
+                </PieChart>
+              </div>
+            </div>
+          </div>
+        </div>
 
-       <div className="flex flex-col items-center border py-2 px-2 rounded-[10px] w-[125px] shadow">
-         {/* chart Status W302 */}
-         <h3 className="text-xs font-bold text-gray-700 mb-1">
-           COMPOSITE WS1
-         </h3>
+        <div className="mb-2 flex items-start gap-2">
+          {/* Kotak input + chips */}
+          <div className="flex flex-wrap gap-1 border rounded px-1 py-1 relative flex-1">
+            {filterOrders.map((order) => (
+              <span
+                key={order.value}
+                className={`flex items-center px-2 py-1 rounded-full text-xs ${
+                  order.valid
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-red-100 text-red-700'
+                }`}
+              >
+                {order.value}
+                <button
+                  onClick={() => handleRemoveOrder(order.value)}
+                  className="ml-1 text-red-500 hover:text-red-700"
+                >
+                  ✕
+                </button>
+              </span>
+            ))}
 
-         <PieChart width={90} height={80}>
-           <Pie
-             data={chartDataCs1}
-             dataKey="value"
-             nameKey="name"
-             cx="50%"
-             cy="50%"
-             innerRadius={20}
-             outerRadius={40}
-             paddingAngle={2}
-           >
-             {chartDataCs1.map((entry, index) => (
-               <Cell key={`cell-${index}`} fill={entry.color} />
-             ))}
-             {/* Label di tengah donut */}
-             <Label
-               value={`${closedPercentageCs1}%`}
-               position="center"
-               style={{
-                 fontSize: '14px',
-                 fontWeight: 'bold',
-                 fill: '#374151', // abu tua
-               }}
-             />
-           </Pie>
-           <Tooltip
-             formatter={(value: number, name: string) => [
-               `${value}`,
-               `${name}`,
-             ]}
-             itemStyle={{ fontSize: '11px' }}
-           />
-         </PieChart>
-       </div>
+            <input
+              type="text"
+              value={orderInput}
+              onChange={(e) => {
+                setOrderInput(e.target.value);
+                setShowOrderSuggestions(true);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && orderInput.trim() !== '') {
+                  handleAddOrder(orderInput.trim());
+                  e.preventDefault();
+                }
+              }}
+              onPaste={(e) => {
+                e.preventDefault();
+                const pasted = e.clipboardData.getData('text');
+                const items = pasted
+                  .split(/\s|,|\n/)
+                  .map((s) => s.trim())
+                  .filter((s) => s !== '');
+                items.forEach((item) => handleAddOrder(item));
+              }}
+              placeholder="Type or paste order no..."
+              className="flex-1 text-xs outline-none px-1"
+            />
 
-       <div className="flex flex-col items-center border py-2 px-2 rounded-[10px] w-[125px] shadow">
-         {/* chart Status W303 */}
-         <h3 className="text-xs font-bold text-gray-700 mb-1">
-           MACHINING WS1
-         </h3>
+            {showOrderSuggestions && orderSuggestions.length > 0 && (
+              <ul className="absolute left-0 top-full mt-1 w-full border rounded bg-white shadow max-h-40 overflow-y-auto text-xs z-20">
+                {orderSuggestions.map((sug) => (
+                  <li
+                    key={sug}
+                    onClick={() => handleAddOrder(sug)}
+                    className="px-2 py-1 hover:bg-blue-100 cursor-pointer"
+                  >
+                    {sug}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
 
-         <PieChart width={90} height={80}>
-           <Pie
-             data={chartDataMw}
-             dataKey="value"
-             nameKey="name"
-             cx="50%"
-             cy="50%"
-             innerRadius={20}
-             outerRadius={40}
-             paddingAngle={2}
-           >
-             {chartDataCs1.map((entry, index) => (
-               <Cell key={`cell-${index}`} fill={entry.color} />
-             ))}
-             {/* Label di tengah donut */}
-             <Label
-               value={`${closedPercentageMw}%`}
-               position="center"
-               style={{
-                 fontSize: '14px',
-                 fontWeight: 'bold',
-                 fill: '#374151', // abu tua
-               }}
-             />
-           </Pie>
-           <Tooltip
-             formatter={(value: number, name: string) => [
-               `${value}`,
-               `${name}`,
-             ]}
-             itemStyle={{ fontSize: '11px' }}
-           />
-         </PieChart>
-       </div>
-
-       <div className="flex flex-col items-center border py-2 px-2 rounded-[10px] w-[125px] shadow">
-         {/* chart Status W304 */}
-         <h3 className="text-xs font-bold text-gray-700 mb-1">
-           SHEETMETAL H4
-         </h3>
-
-         <PieChart width={90} height={80}>
-           <Pie
-             data={chartDataSm4}
-             dataKey="value"
-             nameKey="name"
-             cx="50%"
-             cy="50%"
-             innerRadius={20}
-             outerRadius={40}
-             paddingAngle={2}
-           >
-             {chartDataSm4.map((entry, index) => (
-               <Cell key={`cell-${index}`} fill={entry.color} />
-             ))}
-             {/* Label di tengah donut */}
-             <Label
-               value={`${closedPercentageSm4}%`}
-               position="center"
-               style={{
-                 fontSize: '14px',
-                 fontWeight: 'bold',
-                 fill: '#374151', // abu tua
-               }}
-             />
-           </Pie>
-           <Tooltip
-             formatter={(value: number, name: string) => [
-               `${value}`,
-               `${name}`,
-             ]}
-             itemStyle={{ fontSize: '11px' }}
-           />
-         </PieChart>
-       </div>
-
-       <div className="flex flex-col items-center border py-2 px-2 rounded-[10px] w-[125px] shadow">
-         {/* chart Status W305 */}
-         <h3 className="text-xs font-bold text-gray-700 mb-1">
-           COMPOSITE H4
-         </h3>
-
-         <PieChart width={90} height={80}>
-           <Pie
-             data={chartDataCs4}
-             dataKey="value"
-             nameKey="name"
-             cx="50%"
-             cy="50%"
-             innerRadius={20}
-             outerRadius={40}
-             paddingAngle={2}
-           >
-             {chartDataCs4.map((entry, index) => (
-               <Cell key={`cell-${index}`} fill={entry.color} />
-             ))}
-             {/* Label di tengah donut */}
-             <Label
-               value={`${closedPercentageCs4}%`}
-               position="center"
-               style={{
-                 fontSize: '14px',
-                 fontWeight: 'bold',
-                 fill: '#374151', // abu tua
-               }}
-             />
-           </Pie>
-           <Tooltip
-             formatter={(value: number, name: string) => [
-               `${value}`,
-               `${name}`,
-             ]}
-             itemStyle={{ fontSize: '11px' }}
-           />
-         </PieChart>
-       </div>
-     </div>
-   </div>
- </div>
-
-        <div className="mb-2 flex flex-wrap gap-1 items-center">
+        <div className="mb-2 flex flex-wrap gap-1 items-center ">
           <div className="flex items-center ml-0">
             <span className="text-xs font-medium"></span>
             <label className="relative inline-flex items-center cursor-pointer select-none w-11 h-5">
@@ -1219,19 +1326,19 @@ const filteredOptions = uniqueAcRegs.filter((reg) =>
             placeholder="Search..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="border rounded px-1 py-1 text-[12px] hover:bg-gray-50 shadow-sm"
+            className="border rounded px-1 py-1 text-[12px] hover:bg-gray-50 shadow-sm flex-1"
           />
 
           <button
             onClick={() => setShowOnlyChecked((prev) => !prev)}
-            className="inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-1.5 py-1 bg-white text-[11px] font-medium text-gray-700 hover:bg-gray-50"
+            className="inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-1.5 py-1 bg-white text-[11px] font-medium text-gray-700 hover:bg-gray-50 "
           >
             {showOnlyChecked ? 'Checked Row' : 'All Row'}
           </button>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 ">
             {/* Dropdown Menu */}
-            <div className="relative inline-block text-left ml-0">
+            <div className="relative inline-block text-left ml-0 w-[65px]">
               <button
                 onClick={() => setShowMenu(!showMenu)}
                 className="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-1.5 py-1 bg-white text-[11px] font-medium text-gray-700 hover:bg-gray-50"
@@ -1262,15 +1369,14 @@ const filteredOptions = uniqueAcRegs.filter((reg) =>
           <select
             value={filterBase}
             onChange={(e) => setFilterBase(e.target.value)}
-            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow"
+            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow w-[100px]"
           >
             <option value="">All Base</option>
             <option value="Workshop 1">Workshop 1</option>
             <option value="Hangar 4">Hangar 4</option>
           </select>
 
-
-<div className="relative w-[90px]">
+          <div className="relative w-[120px] ">
             <input
               type="text"
               value={filterAcReg}
@@ -1281,7 +1387,7 @@ const filteredOptions = uniqueAcRegs.filter((reg) =>
               onFocus={() => setShowSuggestions(true)}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 150)} // Delay untuk biar sempat klik
               placeholder="Filter A/C Reg"
-              className="border rounded px-1 py-1 text-[11px] w-full shadow"
+              className="border rounded px-2 py-1 text-[11px] w-full shadow"
             />
 
             {showSuggestions && (
@@ -1314,7 +1420,7 @@ const filteredOptions = uniqueAcRegs.filter((reg) =>
           <select
             value={filterDocStatus}
             onChange={(e) => setFilterDocStatus(e.target.value)}
-            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow"
+            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow w-[120px]"
           >
             <option value="">All Doc Status</option>
             {DOC_STATUS_OPTIONS.map((status) => (
@@ -1327,7 +1433,7 @@ const filteredOptions = uniqueAcRegs.filter((reg) =>
           <select
             value={filterW}
             onChange={(e) => setFilterW(e.target.value)}
-            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow"
+            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow w-[100px]"
           >
             <option value="">All Wrkctr</option>
             <option value="W301">W301</option>
@@ -1340,7 +1446,7 @@ const filteredOptions = uniqueAcRegs.filter((reg) =>
           <select
             value={filterStatusJob}
             onChange={(e) => setFilterStatusJob(e.target.value)}
-            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow"
+            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow  w-[100px]"
           >
             <option value="">All Status Job</option>
             <option value="OPEN">OPEN</option>
@@ -1352,7 +1458,7 @@ const filteredOptions = uniqueAcRegs.filter((reg) =>
           <select
             value={sortKey}
             onChange={(e) => setSortKey(e.target.value)}
-            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow"
+            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow  w-[80px]"
           >
             <option value="">Sort by...</option>
             {sortOptions.map((option) => (
@@ -1366,7 +1472,7 @@ const filteredOptions = uniqueAcRegs.filter((reg) =>
           <select
             value={sortDirection}
             onChange={(e) => setSortDirection(e.target.value as 'asc' | 'desc')}
-            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow"
+            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow  w-[80px]"
           >
             <option value="asc">A-Z</option>
             <option value="desc">Z-A</option>
