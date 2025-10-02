@@ -1343,7 +1343,7 @@ export default function BUSH4() {
                 onClick={() => setShowMenu(!showMenu)}
                 className="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-1.5 py-1 bg-white text-[11px] font-medium text-gray-700 hover:bg-gray-50"
               >
-                ⋮ Actions
+                Actions
               </button>
 
               {showMenu && (
