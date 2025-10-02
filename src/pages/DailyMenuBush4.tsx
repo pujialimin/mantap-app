@@ -89,7 +89,7 @@ const COLUMN_ORDER: { key: string; label: string }[] = [
   { key: 'tjo', label: 'TJO' },
   { key: 'other', label: 'TV/TC' },
   { key: 'status_job', label: 'STATUS JOB' },
-  
+
   { key: 'sp', label: 'SP' },
   { key: 'loc_doc', label: 'Loc Doc/Part' },
   { key: 'date_out', label: 'Date Out' },
@@ -256,6 +256,11 @@ const sortOptions = [
   { value: 'plntwkcntr', label: 'Plntwkcntr' },
 ];
 
+type OrderFilter = {
+  value: string;
+  valid: boolean;
+};
+
 export default function BUSH4() {
   const [rows, setRows] = useState<Row[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -281,6 +286,45 @@ export default function BUSH4() {
   const rowsPerPage = 100;
 
   const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const [filterOrders, setFilterOrders] = useState<string[]>([]);
+  const [orderInput, setOrderInput] = useState('');
+  const [orderSuggestions, setOrderSuggestions] = useState<string[]>([]);
+  const [showOrderSuggestions, setShowOrderSuggestions] = useState(false);
+
+  useEffect(() => {
+    if (orderInput.trim() === '') {
+      setOrderSuggestions([]);
+      return;
+    }
+
+    const uniqueOrders = Array.from(new Set(rows.map((r) => String(r.order))));
+
+    const filtered = uniqueOrders.filter((ord) =>
+      ord.toLowerCase().includes(orderInput.toLowerCase())
+    );
+
+    setOrderSuggestions(filtered.slice(0, 10)); // batasi max 10
+  }, [orderInput, rows]);
+
+  const handleAddOrder = (order: string) => {
+    const normalized = String(order).trim();
+    if (normalized === '') return;
+
+    const alreadyExist = filterOrders.some((o) => o.value === normalized);
+    if (alreadyExist) return;
+
+    // ✅ cek valid atau tidak
+    const isValid = rows.some((r) => String(r.order) === normalized);
+
+    setFilterOrders((prev) => [...prev, { value: normalized, valid: isValid }]);
+    setOrderInput('');
+    setShowOrderSuggestions(false);
+  };
+
+  const handleRemoveOrder = (order: string) => {
+    setFilterOrders(filterOrders.filter((o) => o.value !== order));
+  };
 
   // Ambil unique A/C Reg dari rows
   const uniqueAcRegs = [
@@ -593,6 +637,11 @@ export default function BUSH4() {
     .filter((row) => {
       if (showOnlyChecked && !selectedRows.includes(row.id)) return false;
 
+      // khusus filter order multiple
+      const matchesOrder =
+        filterOrders.length === 0 ||
+        filterOrders.some((o) => o.value === String(row.order));
+
       const matchesSearch = Object.values(row)
         .join(' ')
         .toLowerCase()
@@ -608,6 +657,7 @@ export default function BUSH4() {
       );
 
       return (
+        matchesOrder &&
         matchesSearch &&
         matchesAcReg &&
         matchesDocStatus &&
@@ -656,6 +706,70 @@ export default function BUSH4() {
   return (
     <div className="bg-gray-100 w-full h-full">
       <div className="bg-white px-3 pt-3 pb-6 max-h-[100vh] overflow-hidden w-full rounded-lg">
+        <div className="mb-2 flex items-start gap-2">
+          {/* Kotak input + chips */}
+          <div className="flex flex-wrap gap-1 border rounded px-1 py-1 relative flex-1">
+            {filterOrders.map((order) => (
+              <span
+                key={order.value}
+                className={`flex items-center px-2 py-1 rounded-full text-xs ${
+                  order.valid
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-red-100 text-red-700'
+                }`}
+              >
+                {order.value}
+                <button
+                  onClick={() => handleRemoveOrder(order.value)}
+                  className="ml-1 text-red-500 hover:text-red-700"
+                >
+                  ✕
+                </button>
+              </span>
+            ))}
+
+            <input
+              type="text"
+              value={orderInput}
+              onChange={(e) => {
+                setOrderInput(e.target.value);
+                setShowOrderSuggestions(true);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && orderInput.trim() !== '') {
+                  handleAddOrder(orderInput.trim());
+                  e.preventDefault();
+                }
+              }}
+              onPaste={(e) => {
+                e.preventDefault();
+                const pasted = e.clipboardData.getData('text');
+                const items = pasted
+                  .split(/\s|,|\n/)
+                  .map((s) => s.trim())
+                  .filter((s) => s !== '');
+                items.forEach((item) => handleAddOrder(item));
+              }}
+              placeholder="Type or paste order no..."
+              className="flex-1 text-xs outline-none px-1"
+            />
+
+            {showOrderSuggestions && orderSuggestions.length > 0 && (
+              <ul className="absolute left-0 top-full mt-1 w-full border rounded bg-white shadow max-h-40 overflow-y-auto text-xs z-20">
+                {orderSuggestions.map((sug) => (
+                  <li
+                    key={sug}
+                    onClick={() => handleAddOrder(sug)}
+                    className="px-2 py-1 hover:bg-blue-100 cursor-pointer"
+                  >
+                    {sug}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+
         <div className="mb-2 flex flex-wrap gap-1 items-center">
           <div className="flex items-center ml-0">
             <span className="text-xs font-medium"></span>
@@ -682,24 +796,24 @@ export default function BUSH4() {
             placeholder="Search..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="border rounded px-1 py-1 text-[12px] hover:bg-gray-50 shadow-sm"
+            className="border rounded px-1 py-1 text-[12px] hover:bg-gray-50 shadow-sm flex-1"
           />
 
           <button
             onClick={() => setShowOnlyChecked((prev) => !prev)}
-            className="inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-1.5 py-1 bg-white text-[11px] font-medium text-gray-700 hover:bg-gray-50"
+            className="inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-1 py-1 bg-white text-[11px] font-medium text-gray-700 hover:bg-gray-50 w-[80px] "
           >
             {showOnlyChecked ? 'Checked Row' : 'All Row'}
           </button>
 
           <div className="flex items-center gap-1">
             {/* Dropdown Menu */}
-            <div className="relative inline-block text-left ml-0">
+            <div className="relative inline-block text-left ml-0 w-[80px]">
               <button
                 onClick={() => setShowMenu(!showMenu)}
                 className="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-1.5 py-1 bg-white text-[11px] font-medium text-gray-700 hover:bg-gray-50"
               >
-                ⋮ Actions
+                Actions
               </button>
 
               {showMenu && (
@@ -735,7 +849,7 @@ export default function BUSH4() {
             </div>
           </div>
 
-          <div className="relative w-[90px]">
+          <div className="relative w-[120px]">
             <input
               type="text"
               value={filterAcReg}
@@ -779,7 +893,7 @@ export default function BUSH4() {
           <select
             value={filterDocStatus}
             onChange={(e) => setFilterDocStatus(e.target.value)}
-            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow"
+            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow  w-[120px]"
           >
             <option value="">All Doc Status</option>
             {DOC_STATUS_OPTIONS.map((status) => (
@@ -792,7 +906,7 @@ export default function BUSH4() {
           <select
             value={filterStatusJob}
             onChange={(e) => setFilterStatusJob(e.target.value)}
-            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow"
+            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow w-[100px]"
           >
             <option value="">All Status Job</option>
             <option value="OPEN">OPEN</option>
@@ -804,7 +918,7 @@ export default function BUSH4() {
           <select
             value={sortKey}
             onChange={(e) => setSortKey(e.target.value)}
-            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow"
+            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow  w-[80px]"
           >
             <option value="">Sort by...</option>
             {sortOptions.map((option) => (
@@ -818,7 +932,7 @@ export default function BUSH4() {
           <select
             value={sortDirection}
             onChange={(e) => setSortDirection(e.target.value as 'asc' | 'desc')}
-            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow"
+            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow  w-[80px]"
           >
             <option value="asc">A-Z</option>
             <option value="desc">Z-A</option>
