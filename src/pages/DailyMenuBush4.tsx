@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import * as XLSX from 'xlsx';
+import CustomSelect from '../components/CustomSelect';
 
 const LOCATIONS = ['ON A/C', 'BUSH4', 'WS1', 'CGK'];
 const DOC_TYPES = ['JC', 'MDR', 'PDS', 'SOA'];
@@ -51,6 +52,8 @@ const columnWidths: Record<string, string> = {
   plntwkcntr: 'min-w-[0px]',
   date_in: 'min-w-[0px]',
   doc_status: 'min-w-[30px]',
+
+  priority: 'min-w-[00px]',
   status_pe: 'min-w-[0px]',
   cek_sm4: 'min-w-[0px]',
   cek_cs4: 'min-w-[0px]',
@@ -78,6 +81,8 @@ const COLUMN_ORDER: { key: string; label: string }[] = [
   { key: 'location', label: 'Location' },
   { key: 'date_in', label: 'Date In' },
   { key: 'doc_status', label: 'Doc Status' },
+
+  { key: 'priority', label: 'Priority' },
   { key: 'remark', label: 'Remark' },
   { key: 'cek_sm1', label: 'W301' },
 
@@ -88,8 +93,7 @@ const COLUMN_ORDER: { key: string; label: string }[] = [
   { key: 'nd', label: 'NDT' },
   { key: 'tjo', label: 'TJO' },
   { key: 'other', label: 'TV/TC' },
-  { key: 'status_job', label: 'STATUS JOB' },
-
+  { key: 'status_job', label: 'Status Job' },
   { key: 'sp', label: 'SP' },
   { key: 'loc_doc', label: 'Loc Doc/Part' },
   { key: 'date_out', label: 'Date Out' },
@@ -268,6 +272,7 @@ export default function BUSH4() {
   const [filterOrder, setFilterOrder] = useState('');
   const [filterDocStatus, setFilterDocStatus] = useState('');
   const [filterStatusJob, setFilterStatusJob] = useState('');
+  const [filterPriority, setFilterPriority] = useState('All');
 
   const [sortKey, setSortKey] = useState('');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
@@ -278,7 +283,7 @@ export default function BUSH4() {
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingAction, setPendingAction] = useState<null | (() => void)>(null);
-
+  const [editingValue, setEditingValue] = useState('');
   const [showOnlyChecked, setShowOnlyChecked] = useState(false);
   const [confirmMessage, setConfirmMessage] = useState('');
 
@@ -528,6 +533,21 @@ export default function BUSH4() {
     fetchData();
   }, []);
 
+  //editable kolom
+  const handleChange = (id, key, value) => {
+    setEditingValue((prev) => ({
+      ...prev,
+      [`${id}_${key}`]: value,
+    }));
+  };
+
+  const handleBlur = (id, key) => {
+    const value = editingValue[`${id}_${key}`];
+    if (value !== undefined) {
+      handleUpdate(id, key, value); // hanya update ke Supabase/state utama saat blur
+    }
+  };
+
   const handleUpdate = async (
     id: string,
     keyOrBulk: string,
@@ -648,6 +668,7 @@ export default function BUSH4() {
         .includes(searchTerm.toLowerCase());
 
       const matchesAcReg = filterAcReg === '' || row.ac_reg === filterAcReg;
+
       const matchesDocStatus =
         filterDocStatus === '' || row.doc_status === filterDocStatus;
       const matchesStatusJob =
@@ -655,6 +676,8 @@ export default function BUSH4() {
       const matchesPlntwkcntr = FILTERED_PLNTWKCNTR.includes(
         (row.plntwkcntr || '').toUpperCase()
       );
+      const matchesPriority =
+        filterPriority === 'All' ? true : row.priority === filterPriority;
 
       return (
         matchesOrder &&
@@ -662,7 +685,8 @@ export default function BUSH4() {
         matchesAcReg &&
         matchesDocStatus &&
         matchesStatusJob &&
-        matchesPlntwkcntr
+        matchesPlntwkcntr &&
+        matchesPriority
       );
     })
 
@@ -751,7 +775,7 @@ export default function BUSH4() {
                 items.forEach((item) => handleAddOrder(item));
               }}
               placeholder="Type or paste order no..."
-              className="flex-1 text-xs outline-none px-1"
+              className="flex-1 text-[11px] outline-none px-1"
             />
 
             {showOrderSuggestions && orderSuggestions.length > 0 && (
@@ -796,58 +820,8 @@ export default function BUSH4() {
             placeholder="Search..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="border rounded px-1 py-1 text-[12px] hover:bg-gray-50 shadow-sm flex-1"
+            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow-sm flex-1"
           />
-
-          <button
-            onClick={() => setShowOnlyChecked((prev) => !prev)}
-            className="inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-1 py-1 bg-white text-[11px] font-medium text-gray-700 hover:bg-gray-50 w-[80px] "
-          >
-            {showOnlyChecked ? 'Checked Row' : 'All Row'}
-          </button>
-
-          <div className="flex items-center gap-1">
-            {/* Dropdown Menu */}
-            <div className="relative inline-block text-left ml-0 w-[80px]">
-              <button
-                onClick={() => setShowMenu(!showMenu)}
-                className="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-1.5 py-1 bg-white text-[11px] font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Actions
-              </button>
-
-              {showMenu && (
-                <div className="absolute z-50 mt-2 w-28 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
-                  <div className="py-0 text-[11px]">
-                    <button
-                      onClick={() => handleAction('copy')}
-                      className="block w-full text-left px-2 py-1 hover:bg-gray-100"
-                    >
-                      📋 Copy
-                    </button>
-                    <button
-                      onClick={() => handleActionWithConfirmation('save')}
-                      className="block w-full text-left px-2 py-1 hover:bg-gray-100"
-                    >
-                      💾 Export
-                    </button>
-                    <button
-                      onClick={() => handleActionWithConfirmation('archived')}
-                      className="block w-full text-left px-2 py-1 hover:bg-gray-100"
-                    >
-                      📦 Archived
-                    </button>
-                    <button
-                      onClick={() => handleActionWithConfirmation('delete')}
-                      className="block w-full text-left px-2 py-1 text-red-600 hover:bg-red-100"
-                    >
-                      🗑️ Delete
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
 
           <div className="relative w-[120px]">
             <input
@@ -890,53 +864,116 @@ export default function BUSH4() {
             )}
           </div>
 
-          <select
+          <button
+            onClick={() => setShowOnlyChecked((prev) => !prev)}
+            className="inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-1 py-1 bg-white text-[11px] font-normal  hover:bg-gray-50 w-[80px] "
+          >
+            {showOnlyChecked ? 'Checked Row' : 'All Row'}
+          </button>
+
+          <div className="flex items-center gap-1">
+            {/* Dropdown Menu */}
+            <div className="relative inline-block text-left ml-0 w-[80px]">
+              <button
+                onClick={() => setShowMenu(!showMenu)}
+                className="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-1.5 py-1 bg-white text-[11px] font-normal  hover:bg-gray-50"
+              >
+                Actions
+              </button>
+
+              {showMenu && (
+                <div className="absolute z-50 mt-2 w-28 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+                  <div className="py-0 text-[11px]">
+                    <button
+                      onClick={() => handleAction('copy')}
+                      className="block w-full text-left px-2 py-1 hover:bg-gray-100"
+                    >
+                      📋 Copy
+                    </button>
+                    <button
+                      onClick={() => handleActionWithConfirmation('save')}
+                      className="block w-full text-left px-2 py-1 hover:bg-gray-100"
+                    >
+                      💾 Export
+                    </button>
+                    <button
+                      onClick={() => handleActionWithConfirmation('archived')}
+                      className="block w-full text-left px-2 py-1 hover:bg-gray-100"
+                    >
+                      📦 Archived
+                    </button>
+                    <button
+                      onClick={() => handleActionWithConfirmation('delete')}
+                      className="block w-full text-left px-2 py-1 text-red-600 hover:bg-red-100"
+                    >
+                      🗑️ Delete
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <CustomSelect
+            value={filterPriority}
+            onChange={(e) => setFilterPriority(e.target.value)}
+            options={[
+              { label: 'All Priority', value: 'All' },
+              { label: 'Med', value: 'Med' },
+              { label: 'High', value: 'High' },
+            ]}
+            className="border rounded px-2 py-1 text-[11px]  font-normal hover:bg-gray-50 shadow w-[100px]"
+          />
+
+          <CustomSelect
             value={filterDocStatus}
             onChange={(e) => setFilterDocStatus(e.target.value)}
-            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow  w-[120px]"
-          >
-            <option value="">All Doc Status</option>
-            {DOC_STATUS_OPTIONS.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
-            ))}
-          </select>
+            options={[
+              { label: 'All Doc Status', value: '' },
+              ...DOC_STATUS_OPTIONS.map((status) => ({
+                label: status,
+                value: status,
+              })),
+            ]}
+            className="border rounded px-1 py-1 text-[11px]  font-normal hover:bg-gray-50 shadow w-[120px]"
+          />
 
-          <select
+          <CustomSelect
             value={filterStatusJob}
             onChange={(e) => setFilterStatusJob(e.target.value)}
-            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow w-[100px]"
-          >
-            <option value="">All Status Job</option>
-            <option value="OPEN">OPEN</option>
-            <option value="PROGRESS">PROGRESS</option>
-            <option value="CLOSED">CLOSED</option>
-          </select>
+            options={[
+              { label: 'All Status Job', value: '' },
+              { label: 'OPEN', value: 'OPEN' },
+              { label: 'PROGRESS', value: 'PROGRESS' },
+              { label: 'CLOSED', value: 'CLOSED' },
+            ]}
+            className="border rounded px-1 py-1 text-[11px]   font-normal hover:bg-gray-50 shadow w-[100px]"
+          />
 
           {/* Sort By */}
-          <select
+          <CustomSelect
             value={sortKey}
             onChange={(e) => setSortKey(e.target.value)}
-            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow  w-[80px]"
-          >
-            <option value="">Sort by...</option>
-            {sortOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            options={[
+              { label: 'Sort by...', value: '' },
+              ...sortOptions.map((option) => ({
+                label: option.label,
+                value: option.value,
+              })),
+            ]}
+            className="border rounded px-1 py-1 text-[11px]   font-normal hover:bg-gray-50 shadow w-[80px]"
+          />
 
           {/* Sort Direction */}
-          <select
+          <CustomSelect
             value={sortDirection}
             onChange={(e) => setSortDirection(e.target.value as 'asc' | 'desc')}
-            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow  w-[80px]"
-          >
-            <option value="asc">A-Z</option>
-            <option value="desc">Z-A</option>
-          </select>
+            options={[
+              { label: 'A-Z', value: 'asc' },
+              { label: 'Z-A', value: 'desc' },
+            ]}
+            className="border rounded px-1 py-1 text-[11px]  font-normal  hover:bg-gray-50 shadow w-[80px]"
+          />
         </div>
 
         {/* 🧊 Ini pembungkus baru untuk freeze header */}
@@ -1121,35 +1158,54 @@ export default function BUSH4() {
                           );
                         })()
                       ) : key === 'location' ? (
-                        <select
+                        <CustomSelect
                           value={row[key] || ''}
                           onChange={(e) =>
                             handleUpdate(row.id, key, e.target.value)
                           }
-                          className="border rounded px-0.5 py-0.5"
-                        >
-                          <option value=""></option>
-                          {LOCATIONS.map((loc) => (
-                            <option key={loc} value={loc}>
-                              {loc}
-                            </option>
-                          ))}
-                        </select>
+                          options={[
+                            { label: '', value: '' },
+                            ...LOCATIONS.map((loc) => ({
+                              label: loc,
+                              value: loc,
+                            })),
+                          ]}
+                          className={`border rounded px-0.5 py-0.5 text-[11px] font-normal `}
+                        />
+                      ) : key === 'priority' ? (
+                        <CustomSelect
+                          value={row[key] || ''}
+                          onChange={(e) =>
+                            handleUpdate(row.id, key, e.target.value)
+                          }
+                          options={[
+                            { label: '', value: '' },
+                            { label: 'Med', value: 'Med' },
+                            { label: 'High', value: 'High' },
+                          ]}
+                          className={`border rounded px-0.5 py-0.5 text-[11px] font-normal ${
+                            row[key] === 'High'
+                              ? 'bg-red-500 text-white'
+                              : row[key] === 'Med'
+                              ? 'bg-yellow-500 text-white'
+                              : 'bg-white'
+                          }`}
+                        />
                       ) : key === 'loc_doc' ? (
-                        <select
+                        <CustomSelect
                           value={row[key] || ''}
                           onChange={(e) =>
                             handleUpdate(row.id, key, e.target.value)
                           }
-                          className="border rounded px-0.5 py-0.5 text-[11px]"
-                        >
-                          <option value=""></option>
-                          {LOC_DOC_OPTIONS.map((option) => (
-                            <option key={option} value={option}>
-                              {option}
-                            </option>
-                          ))}
-                        </select>
+                          options={[
+                            { label: '', value: '' },
+                            ...LOC_DOC_OPTIONS.map((option) => ({
+                              label: option,
+                              value: option,
+                            })),
+                          ]}
+                          className="border rounded px-0.5 py-0.5 text-[11px]  font-normal"
+                        />
                       ) : key === 'date_out' ? (
                         row[key] ? (
                           new Date(row[key]).toLocaleDateString('id-ID', {
@@ -1161,42 +1217,50 @@ export default function BUSH4() {
                           ''
                         )
                       ) : STATUS_COLUMNS.includes(key) ? (
-                        <select
+                        <CustomSelect
                           value={row[key] || ''}
                           onChange={(e) =>
                             handleUpdate(row.id, key, e.target.value)
                           }
-                          className={`border rounded px-0.5 py-0.5 w-[50px] text-[11px] text-left 
-                          ${row[key] === 'OPEN' ? 'bg-red-500 text-white' : ''}
-                          ${
-                            row[key] === 'PROGRESS'
-                              ? 'bg-yellow-500 text-white'
-                              : ''
-                          }
-                          ${
-                            row[key] === 'CLOSED'
-                              ? 'bg-green-500 text-white'
-                              : ''
-                          }
-                        `}
-                        >
-                          <option value=""></option>
-                          <option value="OPEN">OPEN</option>
-                          <option value="PROGRESS">PROGRESS</option>
-                          <option value="CLOSED">CLOSED</option>
-                        </select>
+                          options={[
+                            { label: '', value: '' },
+                            { label: 'OPEN', value: 'OPEN' },
+                            { label: 'PROGRESS', value: 'PROGRESS' },
+                            { label: 'CLOSED', value: 'CLOSED' },
+                          ]}
+                          className={`border rounded px-0.5 py-0.5 w-[50px] text-[11px]  text-left font-normal transition-all duration-300 ease-in-out
+                              ${
+                                row[key] === 'OPEN'
+                                  ? 'bg-red-500 text-white'
+                                  : ''
+                              }
+                              ${
+                                row[key] === 'PROGRESS'
+                                  ? 'bg-yellow-500 text-white'
+                                  : ''
+                              }
+                              ${
+                                row[key] === 'CLOSED'
+                                  ? 'bg-green-500 text-white'
+                                  : ''
+                              }
+                            `}
+                        />
                       ) : TEXT_INPUT_COLUMNS.includes(key) ? (
                         <input
                           type="text"
                           maxLength={100}
-                          value={row[key] || ''}
-                          onChange={(e) =>
-                            handleUpdate(row.id, key, e.target.value)
+                          value={
+                            editingValue[`${row.id}_${key}`] ?? row[key] ?? ''
                           }
-                          className="border px-0.5 py-0.5 rounded w-full text-[11px]"
+                          onChange={(e) =>
+                            handleChange(row.id, key, e.target.value)
+                          }
+                          onBlur={() => handleBlur(row.id, key)}
+                          className="border px-0.5 py-0.5 rounded w-full text-[11px] "
                         />
                       ) : key === 'doc_status' ? (
-                        <select
+                        <CustomSelect
                           value={row[key] || ''}
                           onChange={(e) => {
                             const newDocStatus = e.target.value;
@@ -1239,19 +1303,19 @@ export default function BUSH4() {
                               )
                             );
                           }}
-                          className="border rounded px-0.5 py-0.5 text-[11px]]"
-                        >
-                          <option value=""></option>
-                          {!DOC_STATUS_OPTIONS.includes(row[key]) &&
-                            row[key] && (
-                              <option value={row[key]}>{row[key]}</option>
-                            )}
-                          {DOC_STATUS_OPTIONS.map((status) => (
-                            <option key={status} value={status}>
-                              {status}
-                            </option>
-                          ))}
-                        </select>
+                          options={[
+                            { label: '', value: '' },
+                            ...(!DOC_STATUS_OPTIONS.includes(row[key]) &&
+                            row[key]
+                              ? [{ label: row[key], value: row[key] }]
+                              : []),
+                            ...DOC_STATUS_OPTIONS.map((status) => ({
+                              label: status,
+                              value: status,
+                            })),
+                          ]}
+                          className="border rounded px-0.5 py-0.5 text-[11px]  font-normal"
+                        />
                       ) : (
                         String(row[key] ?? '')
                       )}

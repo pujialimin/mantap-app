@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import * as XLSX from 'xlsx';
+import CustomSelect from '../components/CustomSelect';
 
 import { PieChart, Pie, Cell, Tooltip, Legend, Label } from 'recharts';
 
@@ -83,6 +84,8 @@ const columnWidths: Record<string, string> = {
   plntwkcntr: 'min-w-[0px]',
   date_in: 'min-w-[0px]',
   doc_status: 'min-w-[100px]',
+
+  priority: 'min-w-[00px]',
   status_pe: 'min-w-[0px]',
   cek_sm4: 'min-w-[0px]',
   cek_cs4: 'min-w-[0px]',
@@ -111,6 +114,9 @@ const COLUMN_ORDER: { key: string; label: string }[] = [
   { key: 'date_in', label: 'Date In' },
   { key: 'doc_status', label: 'Doc Status' },
 
+  { key: 'status_job', label: 'Status Job' },
+  { key: 'priority', label: 'Priority' },
+  { key: 'remark', label: 'Remark' },
   { key: 'status_sm1', label: 'W301' },
 
   { key: 'status_cs1', label: 'W302' },
@@ -120,8 +126,6 @@ const COLUMN_ORDER: { key: string; label: string }[] = [
   { key: 'nd', label: 'NDT' },
   { key: 'tjo', label: 'TJO' },
   { key: 'other', label: 'TV/TC' },
-  { key: 'status_job', label: 'STATUS JOB' },
-  { key: 'remark', label: 'Remark' },
   { key: 'sp', label: 'SP' },
   { key: 'loc_doc', label: 'Loc Doc/Part' },
   { key: 'date_out', label: 'Date Out' },
@@ -228,7 +232,9 @@ export default function BUSH4() {
   const [filterDocStatus, setFilterDocStatus] = useState('');
   const [filterStatusJob, setFilterStatusJob] = useState('');
   const [filterBase, setFilterBase] = useState('');
+  const [filterPriority, setFilterPriority] = useState('All');
 
+  const [priorityData, setPriorityData] = useState<any[]>([]);
   const [filterW, setFilterW] = useState('');
 
   const [sortKey, setSortKey] = useState('');
@@ -446,6 +452,16 @@ export default function BUSH4() {
       }
 
       setRows(allRows);
+
+      // 🔽 Tambahan: filter hanya priority "High"
+      const highPriority = allRows
+        .filter((row) => row.priority === 'High')
+        .sort(
+          (a, b) =>
+            new Date(b.date_in).getTime() - new Date(a.date_in).getTime()
+        );
+
+      setPriorityData(highPriority);
     };
 
     fetchData();
@@ -466,6 +482,8 @@ export default function BUSH4() {
         .includes(searchTerm.toLowerCase());
 
       const matchesAcReg = filterAcReg === '' || row.ac_reg === filterAcReg;
+      const matchesPriority =
+        filterPriority === 'All' ? true : row.priority === filterPriority;
       const matchesDocStatus =
         filterDocStatus === '' || row.doc_status === filterDocStatus;
       const matchesStatusJob =
@@ -510,7 +528,8 @@ export default function BUSH4() {
         matchesStatusJob &&
         matchesPlntwkcntr &&
         matchesW &&
-        matchesBase
+        matchesBase &&
+        matchesPriority
       );
     })
 
@@ -930,40 +949,110 @@ export default function BUSH4() {
     <div className="bg-gray-100 w-full h-full">
       <div className="bg-white px-3 pt-3 pb-6 max-h-[280vh] overflow-hidden w-full rounded-lg">
         {/* 📊 Status Summary dan Donut Chart */}
-        <div className="flex gap-4 items-start w-full mb-2">
-          {/* 🔹 Kiri: List Status DOC */}
-          <div className="flex flex-col border rounded-[10px] shadow w-64 h-[187px] flex-1 max-w-[400px]">
-            {/* Header dengan background berwarna */}
-            <div className="flex justify-between items-center w-full px-4  bg-[#7864bc] rounded-t-[10px]">
-              <h3 className="text-white py-0 font-bold">STATUS DOCUMENT</h3>
-              <span className="text-sm font-bold text-white">
-                {(
-                  (docStatusCounts
-                    .filter(
-                      (d) => d.name.includes('🟢') || d.name.includes('🟘')
-                    )
-                    .reduce((acc, d) => acc + d.value, 0) /
-                    (totalDocStatus || 1)) *
-                  100
-                ).toFixed(0)}
-                %
-              </span>
+        <div className="flex flex-col md:flex-row gap-4 w-full items-start mb-3">
+          {/* 🔹 Kiri: Dua box sejajar (Status + Priority) */}
+          <div className="flex flex-col md:flex-row gap-3 flex-wrap w-full md:w-auto max-w-[820px]">
+            {/* STATUS DOCUMENT */}
+            <div className="flex flex-col border rounded-[10px] shadow min-w-[230px] max-w-[350px] h-[187px]">
+              {/* Header */}
+              <div className="flex justify-between items-center w-full px-4 bg-[#7864bc] rounded-t-[10px]">
+                <h3 className="text-white py-0 font-bold">STATUS DOCUMENT</h3>
+                <span className="text-sm font-bold text-white">
+                  {(
+                    (docStatusCounts
+                      .filter(
+                        (d) => d.name.includes('🟢') || d.name.includes('🟘')
+                      )
+                      .reduce((acc, d) => acc + d.value, 0) /
+                      (totalDocStatus || 1)) *
+                    100
+                  ).toFixed(0)}
+                  %
+                </span>
+              </div>
+
+              {/* List */}
+              <ul className="w-full max-h-full overflow-y-auto text-xs divide-y divide-gray-200">
+                {docStatusCounts.map((entry, index) => (
+                  <li
+                    key={index}
+                    className="flex justify-between items-center px-2 py-1"
+                  >
+                    <span>{entry.name}</span>
+                    <span className="font-semibold text-gray-700">
+                      {entry.value}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
 
-            {/* Daftar scrollable dengan garis pembatas */}
-            <ul className="w-full max-h-full overflow-y-auto text-xs divide-y divide-gray-200">
-              {docStatusCounts.map((entry, index) => (
-                <li
-                  key={index}
-                  className="flex justify-between items-center px-2 py-1"
-                >
-                  <span>{entry.name}</span>
-                  <span className="font-semibold text-gray-700">
-                    {entry.value}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            {/* PRIORITY BOX */}
+            <div className="flex flex-col border rounded-[10px] shadow min-w-[250px] max-w-[350px] h-[187px]">
+              <div className="flex justify-between items-center w-full px-4 bg-red-500 rounded-t-[10px]">
+                <h3 className="text-white py-0 font-bold">HIGH PRIORITY</h3>
+                <span className="text-sm font-bold text-white">
+                  {
+                    filteredRows.filter(
+                      (r) => r.priority === 'High' && r.archived === false
+                    ).length
+                  }{' '}
+                  ORDER
+                </span>
+              </div>
+
+              <ul className="w-full max-h-full overflow-y-auto text-xs divide-y divide-gray-200">
+                {filteredRows
+                  .filter((r) => r.priority === 'High' && r.archived === false)
+                  .sort(
+                    // urutkan agar yang terbaru ada di BAWAH
+                    (a, b) =>
+                      new Date(a.date_in).getTime() -
+                      new Date(b.date_in).getTime()
+                  )
+                  .map((item) => (
+                    <li
+                      key={item.id}
+                      className="flex flex-col px-2 py-1 text-gray-800"
+                    >
+                      {/* AC REG + ORDER + STATUS JOB */}
+                      <span className="font-bold text-blue-500 flex flex-wrap items-center gap-1">
+                        {item.ac_reg} • {item.order}
+                        {item.status_job && (
+                          <>
+                            <span className="text-gray-500">→</span>
+                            <span
+                              className={`font-bold ${
+                                item.status_job === 'OPEN'
+                                  ? 'text-red-500'
+                                  : item.status_job === 'PROGRESS'
+                                  ? 'text-yellow-500'
+                                  : item.status_job === 'CLOSED'
+                                  ? 'text-green-500'
+                                  : 'text-gray-500'
+                              }`}
+                            >
+                              {item.status_job}
+                            </span>
+                          </>
+                        )}
+                      </span>
+
+                      {/* DESCRIPTION */}
+                      <span className="text-[11px] whitespace-pre-line">
+                        {item.description}
+                      </span>
+
+                      {/* REMARK (ITALIC) */}
+                      {item.remark && (
+                        <span className="text-[11px] italic text-gray-500">
+                          {item.remark}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+              </ul>
+            </div>
           </div>
 
           {/* 🔹 Kanan: Kotak + PieChart W301-W305 */}
@@ -1281,7 +1370,7 @@ export default function BUSH4() {
                 items.forEach((item) => handleAddOrder(item));
               }}
               placeholder="Type or paste order no..."
-              className="flex-1 text-xs outline-none px-1"
+              className="rounded flex-1 text-[11px] outline-none px-1 w-full hover:bg-gray-50"
             />
 
             {showOrderSuggestions && orderSuggestions.length > 0 && (
@@ -1326,55 +1415,8 @@ export default function BUSH4() {
             placeholder="Search..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="border rounded px-1 py-1 text-[12px] hover:bg-gray-50 shadow-sm flex-1"
+            className="border rounded px-2 py-1 text-[11px] w-full hover:bg-gray-50 shadow-sm flex-1"
           />
-
-          <button
-            onClick={() => setShowOnlyChecked((prev) => !prev)}
-            className="inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-1.5 py-1 bg-white text-[11px] font-medium text-gray-700 hover:bg-gray-50 "
-          >
-            {showOnlyChecked ? 'Checked Row' : 'All Row'}
-          </button>
-
-          <div className="flex items-center gap-1 ">
-            {/* Dropdown Menu */}
-            <div className="relative inline-block text-left ml-0 w-[65px]">
-              <button
-                onClick={() => setShowMenu(!showMenu)}
-                className="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-1.5 py-1 bg-white text-[11px] font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Actions
-              </button>
-
-              {showMenu && (
-                <div className="absolute z-50 mt-2 w-28 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
-                  <div className="py-0 text-[11px]">
-                    <button
-                      onClick={() => handleAction('copy')}
-                      className="block w-full text-left px-2 py-1 hover:bg-gray-100"
-                    >
-                      📋 Copy
-                    </button>
-                    <button
-                      onClick={() => handleActionWithConfirmation('save')}
-                      className="block w-full text-left px-2 py-1 hover:bg-gray-100"
-                    >
-                      💾 Export
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-          <select
-            value={filterBase}
-            onChange={(e) => setFilterBase(e.target.value)}
-            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow w-[100px]"
-          >
-            <option value="">All Base</option>
-            <option value="Workshop 1">Workshop 1</option>
-            <option value="Hangar 4">Hangar 4</option>
-          </select>
 
           <div className="relative w-[120px] ">
             <input
@@ -1387,7 +1429,7 @@ export default function BUSH4() {
               onFocus={() => setShowSuggestions(true)}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 150)} // Delay untuk biar sempat klik
               placeholder="Filter A/C Reg"
-              className="border rounded px-2 py-1 text-[11px] w-full shadow"
+              className="border rounded px-2 py-1 text-[11px] w-full hover:bg-gray-50 shadow-sm flex-1"
             />
 
             {showSuggestions && (
@@ -1417,66 +1459,128 @@ export default function BUSH4() {
             )}
           </div>
 
-          <select
+          <button
+            onClick={() => setShowOnlyChecked((prev) => !prev)}
+            className="inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-1.5 py-1 bg-white text-[11px] font-normal  hover:bg-gray-50 "
+          >
+            {showOnlyChecked ? 'Checked Row' : 'All Row'}
+          </button>
+
+          <div className="flex items-center gap-1 ">
+            {/* Dropdown Menu */}
+            <div className="relative inline-block text-left ml-0 w-[65px]">
+              <button
+                onClick={() => setShowMenu(!showMenu)}
+                className="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-1.5 py-1 bg-white text-[11px] font-normal hover:bg-gray-50"
+              >
+                Actions
+              </button>
+
+              {showMenu && (
+                <div className="absolute z-50 mt-2 w-28 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+                  <div className="py-0 text-[11px]">
+                    <button
+                      onClick={() => handleAction('copy')}
+                      className="block w-full text-left px-2 py-1 hover:bg-gray-100"
+                    >
+                      📋 Copy
+                    </button>
+                    <button
+                      onClick={() => handleActionWithConfirmation('save')}
+                      className="block w-full text-left px-2 py-1 hover:bg-gray-100"
+                    >
+                      💾 Export
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          <CustomSelect
+            value={filterBase}
+            onChange={(e) => setFilterBase(e.target.value)}
+            options={[
+              { label: 'All Base', value: '' },
+              { label: 'Workshop 1', value: 'Workshop 1' },
+              { label: 'Hangar 4', value: 'Hangar 4' },
+            ]}
+            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow w-[100px]"
+          />
+
+          <CustomSelect
+            value={filterPriority}
+            onChange={(e) => setFilterPriority(e.target.value)}
+            options={[
+              { label: 'All Priority', value: 'All' },
+              { label: 'Med', value: 'Med' },
+              { label: 'High', value: 'High' },
+            ]}
+            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow w-[100px]"
+          />
+
+          <CustomSelect
             value={filterDocStatus}
             onChange={(e) => setFilterDocStatus(e.target.value)}
-            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow w-[120px]"
-          >
-            <option value="">All Doc Status</option>
-            {DOC_STATUS_OPTIONS.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
-            ))}
-          </select>
+            options={[
+              { label: 'All Doc Status', value: '' },
+              ...DOC_STATUS_OPTIONS.map((status) => ({
+                label: status,
+                value: status,
+              })),
+            ]}
+            className="border rounded px-1 py-1 text-[11px]  font-normal hover:bg-gray-50 shadow w-[120px]"
+          />
 
-          <select
+          <CustomSelect
             value={filterW}
             onChange={(e) => setFilterW(e.target.value)}
+            options={[
+              { label: 'All Wrkctr', value: '' },
+              { label: 'W301', value: 'W301' },
+              { label: 'W302', value: 'W302' },
+              { label: 'W303', value: 'W303' },
+              { label: 'W304', value: 'W304' },
+              { label: 'W305', value: 'W305' },
+            ]}
             className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow w-[100px]"
-          >
-            <option value="">All Wrkctr</option>
-            <option value="W301">W301</option>
-            <option value="W302">W302</option>
-            <option value="W303">W303</option>
-            <option value="W304">W304</option>
-            <option value="W305">W305</option>
-          </select>
+          />
 
-          <select
+          <CustomSelect
             value={filterStatusJob}
             onChange={(e) => setFilterStatusJob(e.target.value)}
-            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow  w-[100px]"
-          >
-            <option value="">All Status Job</option>
-            <option value="OPEN">OPEN</option>
-            <option value="PROGRESS">PROGRESS</option>
-            <option value="CLOSED">CLOSED</option>
-          </select>
+            options={[
+              { label: 'All Status Job', value: '' },
+              { label: 'OPEN', value: 'OPEN' },
+              { label: 'PROGRESS', value: 'PROGRESS' },
+              { label: 'CLOSED', value: 'CLOSED' },
+            ]}
+            className="border rounded px-1 py-1 text-[11px]   font-normal hover:bg-gray-50 shadow w-[100px]"
+          />
 
           {/* Sort By */}
-          <select
+          <CustomSelect
             value={sortKey}
             onChange={(e) => setSortKey(e.target.value)}
-            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow  w-[80px]"
-          >
-            <option value="">Sort by...</option>
-            {sortOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            options={[
+              { label: 'Sort by...', value: '' },
+              ...sortOptions.map((option) => ({
+                label: option.label,
+                value: option.value,
+              })),
+            ]}
+            className="border rounded px-1 py-1 text-[11px]   font-normal hover:bg-gray-50 shadow w-[80px]"
+          />
 
           {/* Sort Direction */}
-          <select
+          <CustomSelect
             value={sortDirection}
             onChange={(e) => setSortDirection(e.target.value as 'asc' | 'desc')}
-            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow  w-[80px]"
-          >
-            <option value="asc">A-Z</option>
-            <option value="desc">Z-A</option>
-          </select>
+            options={[
+              { label: 'A-Z', value: 'asc' },
+              { label: 'Z-A', value: 'desc' },
+            ]}
+            className="border rounded px-1 py-1 text-[11px]  font-normal  hover:bg-gray-50 shadow w-[80px]"
+          />
         </div>
 
         {/* 🧊 Ini pembungkus baru untuk freeze header */}
@@ -1572,6 +1676,19 @@ export default function BUSH4() {
                                 year: 'numeric',
                               })
                             : ''}
+                        </span>
+                      ) : key === 'priority' ? (
+                        <span
+                          className={`font-normal px-1 py-0.5 rounded
+        ${
+          row[key] === 'High'
+            ? 'bg-red-500 text-white'
+            : row[key] === 'Med'
+            ? 'bg-yellow-500 text-white'
+            : ''
+        }`}
+                        >
+                          {row[key] || ''}
                         </span>
                       ) : (
                         String(row[key] ?? '')
