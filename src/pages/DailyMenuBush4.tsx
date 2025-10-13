@@ -81,11 +81,11 @@ const COLUMN_ORDER: { key: string; label: string }[] = [
   { key: 'location', label: 'Location' },
   { key: 'date_in', label: 'Date In' },
   { key: 'doc_status', label: 'Doc Status' },
-
+  { key: 'status_pe', label: 'pe' },
   { key: 'priority', label: 'Priority' },
   { key: 'remark', label: 'Remark' },
   { key: 'cek_sm1', label: 'W301' },
-
+  { key: 'status_sm1', label: 'sm1' },
   { key: 'cek_cs1', label: 'W302' },
   { key: 'cek_mw', label: 'W303' },
   { key: 'cek_sm4', label: 'W304' },
@@ -187,7 +187,12 @@ const getStatusPE = (
         status_cs4,
         status_mw,
       ];
-      const allEmpty = statuses.every((s) => !s || s.trim() === '');
+
+      // ✅ pastikan nilai bukan undefined/null dan benar-benar kosong secara teks
+      const normalized = statuses.map((s) =>
+        typeof s === 'string' ? s.trim() : ''
+      );
+      const allEmpty = normalized.every((s) => s === '');
       return allEmpty ? 'OPEN' : 'PROGRESS';
     }
     return 'PROGRESS';
@@ -197,6 +202,7 @@ const getStatusPE = (
 
   return '';
 };
+
 
 const formatDateToDDMMMYYYY = (date: Date): string => {
   const day = date.getDate().toString().padStart(2, '0');
@@ -601,14 +607,16 @@ export default function BUSH4() {
       );
 
       if (affectsStatusPE) {
+        // 💡 Pastikan semua argumen selalu dikirim dari simulatedRow
         updates['status_pe'] = getStatusPE(
-          simulatedRow.doc_status,
-          simulatedRow.status_sm1,
-          simulatedRow.status_sm4,
-          simulatedRow.status_cs1,
-          simulatedRow.status_cs4,
-          simulatedRow.status_mw
+          simulatedRow.doc_status ?? '',
+          simulatedRow.status_sm1 ?? '',
+          simulatedRow.status_sm4 ?? '',
+          simulatedRow.status_cs1 ?? '',
+          simulatedRow.status_cs4 ?? '',
+          simulatedRow.status_mw ?? ''
         );
+  
         simulatedRow = { ...simulatedRow, status_pe: updates['status_pe'] };
       }
 
@@ -1264,7 +1272,15 @@ export default function BUSH4() {
                           value={row[key] || ''}
                           onChange={(e) => {
                             const newDocStatus = e.target.value;
-                            const newStatusPE = getStatusPE(newDocStatus);
+                            // ✅ Hitung status_pe dengan semua field terkait
+    const newStatusPE = getStatusPE(
+      newDocStatus,
+      row.status_sm1 ?? '',
+      row.status_sm4 ?? '',
+      row.status_cs1 ?? '',
+      row.status_cs4 ?? '',
+      row.status_mw ?? ''
+    );
 
                             const currentRow = rows.find(
                               (r) => r.id === row.id
