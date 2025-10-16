@@ -111,6 +111,7 @@ export default function InputData() {
 const [openPlntwkcntr, setOpenPlntwkcntr] = useState(false);
 const [openDocStatus, setOpenDocStatus] = useState(false);
 const [rows, setRows] = useState<Row[]>([]);
+const [openLocation, setOpenLocation] = useState(false);
 
 
 
@@ -413,6 +414,39 @@ console.log("Existing orders:", existingOrders);
            )}
             </div>
 
+
+    {/* LOCATION */}
+    <div className="relative inline-block text-left">
+      <button
+        onClick={() => {
+          setOpenLocation(!openLocation);
+          setOpenPlntwkcntr(false);
+          setOpenDocType(false);
+          setOpenDocStatus(false);
+        }}
+        className="inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-2 py-0.5 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50"
+      >
+        Location
+      </button>
+      {openLocation && (
+        <div className="absolute z-10 bg-white border mt-1 rounded shadow">
+          {['ON A/C', 'BUSH4', 'WS1'].map((loc) => (
+            <button
+              key={loc}
+              onClick={() => {
+                applyToAll('location', loc);
+                setOpenLocation(false);
+              }}
+              className="block w-full text-left px-4 py-1 hover:bg-gray-100 text-xs"
+              type="button"
+            >
+              {loc}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+    
     {/* DOC STATUS */}
     <div className="relative inline-block text-left">
       <button

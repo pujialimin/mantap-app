@@ -161,8 +161,10 @@ const COLUMN_ORDER = [
   { key: 'doc_type', label: 'Doc' },
   { key: 'location', label: 'Location' },
   
-  { key: 'date_in', label: 'Date In' },
   { key: 'doc_status', label: 'Doc Status' },
+  
+  { key: 'remark', label: 'Remark PE' },
+  { key: 'priority', label: 'Priority' },
   { key: 'status_cs1', label: 'Status' },
   { key: 'remark_cs1', label: 'Remark' },
   { key: 'handle_by_cs1', label: 'Handle by' },
@@ -221,6 +223,9 @@ export default function W302() {
   const [filterStatus, setFilterStatus] = useState('All Status');
   const [filterAcReg, setFilterAcReg] = useState('');
 
+  const [filterPriority, setFilterPriority] = useState('All');
+  const [priorityData, setPriorityData] = useState<any[]>([]);
+  
   const [notification, setNotification] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState('');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
