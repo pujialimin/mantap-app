@@ -9,8 +9,11 @@ import {
 import { Link, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-
+import { HiArchiveBox } from 'react-icons/hi2';
 import { GiHotMeal } from 'react-icons/gi';
+import { FaPlaneDeparture } from "react-icons/fa";
+import { RiMailSendLine } from "react-icons/ri";
+
 
 const menuItems = [
   { label: 'Home', icon: <FaHome />, path: '/' },
@@ -18,7 +21,9 @@ const menuItems = [
   { label: 'Input Data', icon: <FaEdit />, path: '/input' },
   { label: 'Daily Menu', icon: <GiHotMeal />, path: null },
   { label: 'Daily Report', icon: <FaFileAlt />, path: null },
-  { label: 'ABMP', icon: <FaCogs />, path: '/abmp' },
+  { label: 'ABMP', icon: <FaPlaneDeparture />, path: '/abmp' },
+  { label: 'SP-AJA', icon: <RiMailSendLine />, path: '/spaja' },
+  
 ];
 
 const dailyReportSubmenu = [
@@ -43,7 +48,7 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
 
   // Aturan blokir menu & submenu
   const blockedMenus: Record<string, string[]> = {
-    'tbr1dashboard@gmail.com': ['Daily Report', 'Daily Menu', 'Input Data', 'ABMP'], // PO/CUSTOMER
+    'tbr1dashboard@gmail.com': ['Daily Report', 'Daily Menu', 'Input Data'], // PO/CUSTOMER
     'tbr.narrowbody@gmail.com': ['Daily Report'], // PE BUSH4
     'tbr.structureshop@gmail.com': ['Daily Report'], // PE WS1
     'sheetmetalbush4@gmail.com': ['Daily Menu', 'Input Data'], // SM BUSH4
@@ -174,7 +179,7 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
       {/* Version Info di pojok kiri bawah */}
       {!isCollapsed && (
         <div className="absolute bottom-6 left-2 text-xs text-[#f0f0f0]">
-          hELP: Puji_Alimin/TBR-1
+          Contact: Puji.Ali/TBR-1
         </div>
       )}
     </div>

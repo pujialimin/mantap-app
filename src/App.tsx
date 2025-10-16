@@ -12,6 +12,7 @@ import InputData from './pages/InputData';
 import DailyMenu from './pages/DailyMenu';
 import DailyReport from './pages/DailyReport';
 import Abmp from './pages/Abmp';
+import Spaja from './pages/Spaja';
 import W301 from './pages/W301';
 import W302 from './pages/W302';
 import W303 from './pages/W303';
@@ -122,6 +123,8 @@ function MainLayout() {
         return 'Daily Report Composite BUSH4 - W305';
       case '/abmp':
         return 'ABMP';
+        case '/spaja':
+          return 'SP-AJA';
       default:
         return 'Home';
     }
@@ -188,6 +191,7 @@ function MainLayout() {
             <Route path="/daily-report/w304" element={<W304 />} />
             <Route path="/daily-report/w305" element={<W305 />} />
             <Route path="/abmp" element={<Abmp />} />
+            <Route path="/spaja" element={<Spaja />} />
             <Route path="/archived" element={<Archived />} />
           </Routes>
         </div>
