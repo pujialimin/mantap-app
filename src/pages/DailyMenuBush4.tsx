@@ -92,7 +92,7 @@ const COLUMN_ORDER: { key: string; label: string }[] = [
   { key: 'tjo', label: 'TJO' },
   { key: 'other', label: 'TV/TC' },
   { key: 'status_job', label: 'Status Job' },
-  { key: 'tracking_sp', label: 'Tracking SP' },
+  { key: 'tracking_sp', label: 'Tracking SP-AJA' },
 ];
 
 const STATUS_COLORS: Record<string, string> = {
