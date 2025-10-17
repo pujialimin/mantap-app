@@ -53,6 +53,7 @@ const columnWidths: Record<string, string> = {
   date_in: 'min-w-[0px]',
   doc_status: 'min-w-[30px]',
 
+  tracking_sp: 'min-w-[200px]',
   priority: 'min-w-[00px]',
   status_pe: 'min-w-[0px]',
   cek_sm4: 'min-w-[0px]',
