@@ -167,7 +167,7 @@ import {
           {/* LEFT */}
           <View style={styles.leftHeader}>
             <Image
-              src="/public/hijau.png"
+              src="/hijau.png"
               style={{ width: 170, height: 'auto', marginLeft: 15 }} // ubah ukuran sesuai kebutuhan
             />
           </View>
