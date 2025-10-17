@@ -1,6 +1,7 @@
 {
   "name": "mdr-tracking-ui",
   "version": "0.1.0",
+  "type": "module",
   "dependencies": {
     "@react-pdf/renderer": "^4.3.0",
     "@supabase/auth-ui-react": "^0.4.7",
