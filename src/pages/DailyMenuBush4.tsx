@@ -1054,7 +1054,7 @@ export default function BUSH4() {
                         </span>
                       ) : key === 'no' ? (
                         (currentPage - 1) * rowsPerPage + rowIndex + 1
-                      ) : key === 'description' || key === 'ac_reg' ? (
+                      ) : key === 'description' || key === 'ac_reg' || key === 'tracking_sp' ? (
                         editingCell?.id === row.id &&
                         editingCell?.field === key ? (
                           <input
