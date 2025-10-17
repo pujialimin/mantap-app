@@ -65,7 +65,7 @@ const columnWidths: Record<string, string> = {
   other: 'min-w-[0px]',
   status_job: 'min-w-[00px]',
   remark: 'min-w-[200px]',
-  tracking_sp: 'min-w-[200px]',
+  tracking_sp: 'min-w-[350px]',
   sp: 'min-w-[120px]',
   loc_doc: 'min-w-[0px]',
   date_out: 'min-w-[0px]',
