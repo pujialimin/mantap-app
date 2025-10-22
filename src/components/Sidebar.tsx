@@ -179,7 +179,7 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
       {/* Version Info di pojok kiri bawah */}
       {!isCollapsed && (
         <div className="absolute bottom-6 left-2 text-xs text-[#f0f0f0]">
-          Contact: Puji.Ali.07
+          Contact: Puji.Ali.Rev.08
         </div>
       )}
     </div>

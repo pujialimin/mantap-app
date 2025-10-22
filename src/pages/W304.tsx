@@ -680,7 +680,8 @@ const filteredRows = rows.filter((row) => {
                 });
 
                 const encoded = encodeURIComponent(message);
-                const url = `https://wa.me/?text=${encoded}`;
+                const url = `https://api.whatsapp.com/send?text=${encoded}`;
+
                 window.open(url, '_blank');
               }}
               className="bg-green-500 hover:bg-green-600 text-white text-[11px] px-2 py-1 rounded shadow"
