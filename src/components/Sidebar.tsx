@@ -48,12 +48,12 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
 
   // Aturan blokir menu & submenu
   const blockedMenus: Record<string, string[]> = {
-    'tbr1dashboard@gmail.com': ['Daily Report', 'Daily Menu', 'Input Data'], // PO/CUSTOMER
+    'tbr1dashboard@gmail.com': ['Daily Report', 'Daily Menu', 'Input Data', 'SP-AJA'], // PO/CUSTOMER
     'tbr.narrowbody@gmail.com': ['Daily Report'], // PE BUSH4
     'tbr.structureshop@gmail.com': ['Daily Report'], // PE WS1
-    'sheetmetalbush4@gmail.com': ['Daily Menu', 'Input Data'], // SM BUSH4
-    'asmorodoro@gmail.com': ['Daily Menu', 'Input Data'], // COMP BUSH4
-    'tbr6composite.garuda@gmail.com': ['Daily Menu', 'Input Data'], // COMP BUSH4
+    'sheetmetalbush4@gmail.com': ['Daily Menu', 'Input Data', 'SP-AJA'], // SM BUSH4
+    'asmorodoro@gmail.com': ['Daily Menu', 'Input Data', 'SP-AJA'], // COMP BUSH4
+    'tbr6composite.garuda@gmail.com': ['Daily Menu', 'Input Data', 'SP-AJA'], // COMP BUSH4
   };
 
   const blockedSubmenus: Record<string, string[]> = {
