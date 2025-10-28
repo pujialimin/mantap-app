@@ -54,6 +54,9 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
     'sheetmetalbush4@gmail.com': ['Daily Menu', 'Input Data', 'SP-AJA'], // SM BUSH4
     'asmorodoro@gmail.com': ['Daily Menu', 'Input Data', 'SP-AJA'], // COMP BUSH4
     'tbr6composite.garuda@gmail.com': ['Daily Menu', 'Input Data', 'SP-AJA'], // COMP BUSH4
+    'composite1945@gmail.com': ['Daily Menu', 'Input Data', 'SP-AJA'], // SM BUSH4
+    'tbr3majujayasentosa@gmail.com': ['Daily Menu', 'Input Data', 'SP-AJA'], // COMP BUSH4
+    'toolstorews.1@gmail.com': ['Daily Menu', 'Input Data', 'SP-AJA'], // COMP BUSH4
   };
 
   const blockedSubmenus: Record<string, string[]> = {
@@ -69,6 +72,9 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
     'sheetmetalbush4@gmail.com': ['W301', 'W302', 'W303', 'W305'], // SM BUSH4
     'asmorodoro@gmail.com': ['W301', 'W302', 'W303', 'W304'], // COMP BUSH4
     'tbr6composite.garuda@gmail.com': ['W301', 'W302', 'W303', 'W304'], // COMP BUSH4
+    'toolstorews.1@gmail.com': ['W304', 'W302', 'W303', 'W305'], // SM BUSH4
+    'tbr3majujayasentosa@gmail.com': ['W301', 'W302', 'W305', 'W304'], // COMP BUSH4
+    'composite1945@gmail.com': ['W301', 'W305', 'W303', 'W304'], // COMP BUSH4
   };
 
   // Filter menu utama
