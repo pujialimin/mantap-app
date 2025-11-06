@@ -48,15 +48,12 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
 
   // Aturan blokir menu & submenu
   const blockedMenus: Record<string, string[]> = {
-    'tbr1dashboard@gmail.com': ['Daily Report', 'Daily Menu', 'Input Data', 'SP-AJA'], // PO/CUSTOMER
+    'tbr1dashboard@gmail.com': ['Daily Report', 'Daily Menu', 'Input Data'], // PO/CUSTOMER
     'tbr.narrowbody@gmail.com': ['Daily Report'], // PE BUSH4
     'tbr.structureshop@gmail.com': ['Daily Report'], // PE WS1
-    'sheetmetalbush4@gmail.com': ['Daily Menu', 'Input Data', 'SP-AJA'], // SM BUSH4
-    'asmorodoro@gmail.com': ['Daily Menu', 'Input Data', 'SP-AJA'], // COMP BUSH4
-    'tbr6composite.garuda@gmail.com': ['Daily Menu', 'Input Data', 'SP-AJA'], // COMP BUSH4
-    'composite1945@gmail.com': ['Daily Menu', 'Input Data', 'SP-AJA'], // SM BUSH4
-    'tbr3majujayasentosa@gmail.com': ['Daily Menu', 'Input Data', 'SP-AJA'], // COMP BUSH4
-    'toolstorews.1@gmail.com': ['Daily Menu', 'Input Data', 'SP-AJA'], // COMP BUSH4
+    'sheetmetalbush4@gmail.com': ['Daily Menu', 'Input Data'], // SM BUSH4
+    'asmorodoro@gmail.com': ['Daily Menu', 'Input Data'], // COMP BUSH4
+    'tbr6composite.garuda@gmail.com': ['Daily Menu', 'Input Data'], // COMP BUSH4
   };
 
   const blockedSubmenus: Record<string, string[]> = {
@@ -72,9 +69,6 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
     'sheetmetalbush4@gmail.com': ['W301', 'W302', 'W303', 'W305'], // SM BUSH4
     'asmorodoro@gmail.com': ['W301', 'W302', 'W303', 'W304'], // COMP BUSH4
     'tbr6composite.garuda@gmail.com': ['W301', 'W302', 'W303', 'W304'], // COMP BUSH4
-    'toolstorews.1@gmail.com': ['W304', 'W302', 'W303', 'W305'], // SM BUSH4
-    'tbr3majujayasentosa@gmail.com': ['W301', 'W302', 'W305', 'W304'], // COMP BUSH4
-    'composite1945@gmail.com': ['W301', 'W305', 'W303', 'W304'], // COMP BUSH4
   };
 
   // Filter menu utama
@@ -185,7 +179,7 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
       {/* Version Info di pojok kiri bawah */}
       {!isCollapsed && (
         <div className="absolute bottom-6 left-2 text-xs text-[#f0f0f0]">
-          Contact: Puji.Ali.Rev.08
+          Contact: Puji.Ali.07
         </div>
       )}
     </div>

@@ -256,7 +256,7 @@ const filteredOptions = uniqueAcRegs.filter((reg) =>
 //////
 
 const filteredRows = rows.filter((row) => {
-  const status = row.status_cs4 || '';
+  const status = row.status_cs1 || '';
 
   const matchesAcReg = row.ac_reg
     ?.toLowerCase()
