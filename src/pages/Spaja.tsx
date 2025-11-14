@@ -1152,6 +1152,12 @@ export default function BUSH4() {
           >
             Next ▷
           </button>
+
+            {/* Tambahan: total data */}
+  <span className="text-gray-600 ml-2 text-[11px]">
+    • Total {rows.length} data
+  </span>
+  
         </div>
       </div>
     </div>

@@ -65,7 +65,6 @@ const columnWidths: Record<string, string> = {
   other: 'min-w-[0px]',
   status_job: 'min-w-[00px]',
   remark: 'min-w-[200px]',
-  tracking_sp: 'min-w-[350px]',
   sp: 'min-w-[120px]',
   loc_doc: 'min-w-[0px]',
   date_out: 'min-w-[0px]',
@@ -95,8 +94,9 @@ const COLUMN_ORDER: { key: string; label: string }[] = [
   { key: 'tjo', label: 'TJO' },
   { key: 'other', label: 'TV/TC' },
   { key: 'status_job', label: 'Status Job' },
-  
-  { key: 'tracking_sp', label: 'Tracking SP' },
+  { key: 'sp', label: 'SP' },
+  { key: 'loc_doc', label: 'Loc Doc/Part' },
+  { key: 'date_out', label: 'Date Out' },
 ];
 
 const STATUS_COLORS: Record<string, string> = {
@@ -249,6 +249,8 @@ const getStatusJob = (row: Row): string => {
 
 const FILTERED_PLNTWKCNTR = ['CGK', 'GAH1', 'GAH2', 'GAH3', 'WSST', 'WS1'];
 
+
+
 const sortOptions = [
   { value: 'ac_reg', label: 'A/C Reg' },
   { value: 'order', label: 'Order' },
@@ -296,6 +298,10 @@ export default function BUSH4() {
   const [orderInput, setOrderInput] = useState('');
   const [orderSuggestions, setOrderSuggestions] = useState<string[]>([]);
   const [showOrderSuggestions, setShowOrderSuggestions] = useState(false);
+
+  const filteredRowsTotal = rows.filter((r) =>
+  FILTERED_PLNTWKCNTR.includes(r.plntwkcntr)
+);
 
   useEffect(() => {
     if (orderInput.trim() === '') {
@@ -673,9 +679,9 @@ export default function BUSH4() {
         filterDocStatus === '' || row.doc_status === filterDocStatus;
       const matchesStatusJob =
         filterStatusJob === '' || row.status_job === filterStatusJob;
-      const matchesPlntwkcntr = FILTERED_PLNTWKCNTR.includes(
-        (row.plntwkcntr || '').toUpperCase()
-      );
+        const matchesPlntwkcntr =
+        FILTERED_PLNTWKCNTR.includes((row.plntwkcntr || '').toUpperCase()) ||
+        ['WS1', 'CGK'].includes((row.location || '').toUpperCase());
       const matchesPriority =
         filterPriority === 'All' ? true : row.priority === filterPriority;
 
@@ -1050,7 +1056,7 @@ export default function BUSH4() {
                         </span>
                       ) : key === 'no' ? (
                         (currentPage - 1) * rowsPerPage + rowIndex + 1
-                      ) : key === 'description' || key === 'ac_reg' || key === 'tracking_sp' ? (
+                      ) : key === 'description' || key === 'ac_reg' ? (
                         editingCell?.id === row.id &&
                         editingCell?.field === key ? (
                           <input
@@ -1387,6 +1393,11 @@ export default function BUSH4() {
           >
             Next ▷
           </button>
+
+          {/* Tambahan: total data berdasarkan filter */}
+          <span className="text-gray-600 ml-2">
+            • Total {filteredRowsTotal.length} data
+          </span>
         </div>
       </div>
     </div>

@@ -53,7 +53,6 @@ const columnWidths: Record<string, string> = {
   date_in: 'min-w-[0px]',
   doc_status: 'min-w-[30px]',
 
-  tracking_sp: 'min-w-[350px]',
   priority: 'min-w-[00px]',
   status_pe: 'min-w-[0px]',
   cek_sm4: 'min-w-[0px]',
@@ -93,7 +92,9 @@ const COLUMN_ORDER: { key: string; label: string }[] = [
   { key: 'tjo', label: 'TJO' },
   { key: 'other', label: 'TV/TC' },
   { key: 'status_job', label: 'Status Job' },
-  { key: 'tracking_sp', label: 'Tracking SP-AJA' },
+  { key: 'sp', label: 'SP' },
+  { key: 'loc_doc', label: 'Loc Doc/Part' },
+  { key: 'date_out', label: 'Date Out' },
 ];
 
 const STATUS_COLORS: Record<string, string> = {
@@ -200,7 +201,6 @@ const getStatusPE = (
   return '';
 };
 
-
 const formatDateToDDMMMYYYY = (date: Date): string => {
   const day = date.getDate().toString().padStart(2, '0');
   const monthNames = [
@@ -299,6 +299,10 @@ export default function BUSH4() {
   const [orderInput, setOrderInput] = useState('');
   const [orderSuggestions, setOrderSuggestions] = useState<string[]>([]);
   const [showOrderSuggestions, setShowOrderSuggestions] = useState(false);
+
+  const filteredRowsTotal = rows.filter((r) =>
+    FILTERED_PLNTWKCNTR.includes(r.plntwkcntr)
+  );
 
   useEffect(() => {
     if (orderInput.trim() === '') {
@@ -613,7 +617,7 @@ export default function BUSH4() {
           simulatedRow.status_cs4 ?? '',
           simulatedRow.status_mw ?? ''
         );
-  
+
         simulatedRow = { ...simulatedRow, status_pe: updates['status_pe'] };
       }
 
@@ -1055,7 +1059,7 @@ export default function BUSH4() {
                         </span>
                       ) : key === 'no' ? (
                         (currentPage - 1) * rowsPerPage + rowIndex + 1
-                      ) : key === 'description' || key === 'ac_reg' || key === 'tracking_sp' ? (
+                      ) : key === 'description' || key === 'ac_reg' ? (
                         editingCell?.id === row.id &&
                         editingCell?.field === key ? (
                           <input
@@ -1270,14 +1274,14 @@ export default function BUSH4() {
                           onChange={(e) => {
                             const newDocStatus = e.target.value;
                             // ✅ Hitung status_pe dengan semua field terkait
-    const newStatusPE = getStatusPE(
-      newDocStatus,
-      row.status_sm1 ?? '',
-      row.status_sm4 ?? '',
-      row.status_cs1 ?? '',
-      row.status_cs4 ?? '',
-      row.status_mw ?? ''
-    );
+                            const newStatusPE = getStatusPE(
+                              newDocStatus,
+                              row.status_sm1 ?? '',
+                              row.status_sm4 ?? '',
+                              row.status_cs1 ?? '',
+                              row.status_cs4 ?? '',
+                              row.status_mw ?? ''
+                            );
 
                             const currentRow = rows.find(
                               (r) => r.id === row.id
@@ -1400,6 +1404,11 @@ export default function BUSH4() {
           >
             Next ▷
           </button>
+
+          {/* Tambahan: total data berdasarkan filter */}
+          <span className="text-gray-600 ml-2">
+            • Total {filteredRowsTotal.length} data
+          </span>
         </div>
       </div>
     </div>
