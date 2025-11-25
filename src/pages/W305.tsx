@@ -810,7 +810,7 @@ const filteredRows = rows.filter((row) => {
           )}
         </div>
         {/* 🧊 Ini pembungkus baru untuk freeze header */}
-        <div className="w-full overflow-y-auto max-h-[65vh] border border-gray-300 rounded shadow-inner w-full overflow-x-auto">
+        <div className="w-full overflow-y-auto max-h-[65vh] border border-gray-300 rounded shadow-inner overflow-x-auto">
           <table className="w-full whitespace-nowrap table-auto text-[11px] leading-tight">
             <thead className="sticky top-0 z-10 bg-white shadow">
               <tr className="bg-gradient-to-t from-[#00838F] to-[#00838F] text-white text-xs font-semibold text-center">
