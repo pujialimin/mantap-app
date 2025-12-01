@@ -7,22 +7,9 @@ const LOCATIONS = ['ON A/C', 'BUSH4', 'WS1'];
 const DOC_TYPES = ['JC', 'MDR', 'PDS', 'SOA'];
 const DOC_STATUS_OPTIONS = [
   '🔴NEED RO',
-  '🔴WAIT.REMOVE',
-  '🔴WAIT.BDP',
   '🟢COMPLETED',
-  '🟢DONE BY SOA',
   '🟡RO DONE',
-  '🟡EVALUATED',
-  '🟡CONTACT OEM',
-  '🟡HOLD',
-  '🟡RESTAMP',
-  '🟡REVISION',
-  '🔘REPLACE',
-  '🔘NOT TBR',
-  '🔘COVER BY',
-  '🔘TJK ITEM',
   '🔘CANCEL',
-  '🔘ROBBING',
 ];
 
 const getStatusPE = (doc_status: string): string => {
