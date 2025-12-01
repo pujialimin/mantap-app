@@ -54,6 +54,9 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
     'sheetmetalbush4@gmail.com': ['Daily Menu', 'Input Data'], // SM BUSH4
     'asmorodoro@gmail.com': ['Daily Menu', 'Input Data'], // COMP BUSH4
     'tbr6composite.garuda@gmail.com': ['Daily Menu', 'Input Data'], // COMP BUSH4
+    'tbr3majujayasentosa@gmail.com': ['Daily Menu', 'Input Data'],
+    'composite1945@gmail.com': ['Daily Menu', 'Input Data'],
+    'toolstorews.1@gmail.com': ['Daily Menu', 'Input Data'],
   };
 
   const blockedSubmenus: Record<string, string[]> = {
@@ -69,6 +72,9 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
     'sheetmetalbush4@gmail.com': ['W301', 'W302', 'W303', 'W305'], // SM BUSH4
     'asmorodoro@gmail.com': ['W301', 'W302', 'W303', 'W304'], // COMP BUSH4
     'tbr6composite.garuda@gmail.com': ['W301', 'W302', 'W303', 'W304'], // COMP BUSH4
+    'tbr3majujayasentosa@gmail.com': ['W301', 'W302', 'W305', 'W304'], // COMP BUSH4
+    'composite1945@gmail.com': ['W301', 'W303', 'W305', 'W304'],
+    'toolstorews.1@gmail.com': ['W303', 'W302', 'W305', 'W304'],
   };
 
   // Filter menu utama
@@ -179,7 +185,7 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
       {/* Version Info di pojok kiri bawah */}
       {!isCollapsed && (
         <div className="absolute bottom-6 left-2 text-xs text-[#f0f0f0]">
-          Contact: Puji.Ali.07
+          Contact: Puji.Ali.08
         </div>
       )}
     </div>

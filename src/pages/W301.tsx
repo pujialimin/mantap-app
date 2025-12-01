@@ -422,7 +422,7 @@ const filteredOptions = uniqueAcRegs.filter((reg) =>
       year: 'numeric',
     });
 
-    const header = `*DAILY WORKLOAD REPORT*\n*SHEETMETAL WORKSHOP-1*\nTBR-5 | ${shiftType}\n${today}`;
+    const header = `*DAILY WORKLOAD REPORT*\n*SHEETMETAL WORKSHOP-1*\nTCR-1 | ${shiftType}\n${today}`;
     const summary = `\n\n*TOTAL : ${totalOrder} ORDER*\n${totalOpen} OPEN | ${totalProgress} PROGRESS | ${totalClosed} CLOSED`;
 
     const detail = orders

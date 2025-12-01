@@ -416,7 +416,7 @@ const filteredRows = rows.filter((row) => {
       year: 'numeric',
     });
 
-    const header = `*DAILY WORKLOAD REPORT*\n*COMPOSITE BUSH-4*\nTBR-6 | ${shiftType}\n${today}`;
+    const header = `*DAILY WORKLOAD REPORT*\n*COMPOSITE BUSH-4*\nTJK-7 | ${shiftType}\n${today}`;
     const summary = `\n\n*TOTAL : ${totalOrder} ORDER*\n${totalOpen} OPEN | ${totalProgress} PROGRESS | ${totalClosed} CLOSED`;
 
     const detail = orders

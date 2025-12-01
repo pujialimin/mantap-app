@@ -7,6 +7,7 @@ const LOCATIONS = ['ON A/C', 'BUSH4', 'WS1', 'CGK'];
 const DOC_TYPES = ['JC', 'MDR', 'PDS', 'SOA'];
 const PLNTWKCNTR = ['CGK', 'GAH1', 'GAH2', 'GAH3', 'GAH4', 'WSSR', 'WSST'];
 
+
 type Row = {
   id: string;
   [key: string]: any;
@@ -14,25 +15,27 @@ type Row = {
 
 const DOC_STATUS_OPTIONS = [
   '🔴NEED RO',
-  '🔴WAIT.REMOVE',
-  '🔴WAIT.BDP',
-  '🟢COMPLETED',
-  '🟢DONE BY SOA',
   '🟡RO DONE',
-  '🟡EVALUATED',
-  '🟡CONTACT OEM',
-  '🟡HOLD',
-  '🟡RESTAMP',
-  '🟡REVISION',
-  '🔘REPLACE',
-  '🔘NOT TBR',
-  '🔘COVER BY',
-  '🔘TJK ITEM',
+  '🟢COMPLETED',
   '🔘CANCEL',
-  '🔘ROBBING',
 ];
 
 const TEXT_INPUT_COLUMNS = ['remark', 'sp'];
+
+const REMARK_OPTIONS = [
+  'WAITING REMOVE',
+  'WAITING MATERIAL',
+  'EVALUATED',
+  'NOT PRINTED YET',
+  'CONTACT OEM',
+  'HOLD',
+  'RESTAMP',
+  'REVISION',
+  'DONE BY SOA',
+  'REPLACE',
+  'COVER BY',
+  'ROBBING',
+];
 
 const LOC_DOC_OPTIONS = [
   'TJO (DOC ONLY)',
@@ -68,6 +71,8 @@ const columnWidths: Record<string, string> = {
   sp: 'min-w-[120px]',
   loc_doc: 'min-w-[0px]',
   date_out: 'min-w-[0px]',
+
+  tracking_sp: 'min-w-[400px]',
 };
 
 const COLUMN_ORDER: { key: string; label: string }[] = [
@@ -92,9 +97,8 @@ const COLUMN_ORDER: { key: string; label: string }[] = [
   { key: 'tjo', label: 'TJO' },
   { key: 'other', label: 'TV/TC' },
   { key: 'status_job', label: 'Status Job' },
-  { key: 'sp', label: 'SP' },
-  { key: 'loc_doc', label: 'Loc Doc/Part' },
-  { key: 'date_out', label: 'Date Out' },
+
+  { key: 'tracking_sp', label: 'Tracking SP' },
 ];
 
 const STATUS_COLORS: Record<string, string> = {
@@ -154,25 +158,9 @@ const getStatusPE = (
   status_cs4?: string,
   status_mw?: string
 ): string => {
-  const openStatuses = ['🔴NEED RO', '🔴WAIT.REMOVE', '🔴WAIT.BDP'];
-  const progressStatuses = [
-    '🟡RO DONE',
-    '🟡EVALUATED',
-    '🟡CONTACT OEM',
-    '🟡HOLD',
-    '🟡RESTAMP',
-    '🟡REVISION',
-  ];
-  const closedStatuses = [
-    '🟢COMPLETED',
-    '🟢DONE BY SOA',
-    '🔘TJK ITEM',
-    '🔘NOT TBR',
-    '🔘REPLACE',
-    '🔘COVER BY',
-    '🔘CANCEL',
-    '🔘ROBBING',
-  ];
+  const openStatuses = ['🔴NEED RO'];
+  const progressStatuses = ['🟡RO DONE'];
+  const closedStatuses = ['🟢COMPLETED', '🔘CANCEL'];
 
   if (openStatuses.includes(doc_status)) return 'OPEN';
 
@@ -291,7 +279,7 @@ export default function BUSH4() {
   const [confirmMessage, setConfirmMessage] = useState('');
 
   const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 100;
+  const rowsPerPage = 200;
 
   const [showSuggestions, setShowSuggestions] = useState(false);
 
@@ -299,6 +287,9 @@ export default function BUSH4() {
   const [orderInput, setOrderInput] = useState('');
   const [orderSuggestions, setOrderSuggestions] = useState<string[]>([]);
   const [showOrderSuggestions, setShowOrderSuggestions] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRecalculating, setIsRecalculating] = useState(false);
+  const [tempRemark, setTempRemark] = useState<Record<string, string>>({});
 
   const filteredRowsTotal = rows.filter((r) =>
     FILTERED_PLNTWKCNTR.includes(r.plntwkcntr)
@@ -503,40 +494,42 @@ export default function BUSH4() {
     field: string;
   } | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      let allRows: any[] = [];
-      let from = 0;
-      const limit = 1000;
-      let moreData = true;
+  // 🔹 Pindahkan fetchData ke luar agar global function
+  const fetchData = async () => {
+    let allRows: any[] = [];
+    let from = 0;
+    const limit = 1000;
+    let moreData = true;
 
-      while (moreData) {
-        const { data, error } = await supabase
-          .from('mdr_tracking')
-          .select('*')
-          .eq('archived', false)
-          .order('date_in', { ascending: false })
-          .range(from, from + limit - 1); // ambil per 1000
+    while (moreData) {
+      const { data, error } = await supabase
+        .from('mdr_tracking')
+        .select('*')
+        .eq('archived', false)
+        .order('date_in', { ascending: false })
+        .range(from, from + limit - 1);
 
-        if (error) {
-          console.error('Error fetching data:', error);
-          break;
-        }
-
-        if (data && data.length > 0) {
-          allRows = [...allRows, ...data];
-          from += limit;
-          if (data.length < limit) {
-            moreData = false; // sudah habis
-          }
-        } else {
-          moreData = false;
-        }
+      if (error) {
+        console.error('Error fetching data:', error);
+        break;
       }
 
-      setRows(allRows);
-    };
+      if (data && data.length > 0) {
+        allRows = [...allRows, ...data];
+        from += limit;
+        if (data.length < limit) {
+          moreData = false;
+        }
+      } else {
+        moreData = false;
+      }
+    }
 
+    setRows(allRows);
+  };
+
+  // 🔹 useEffect sekarang hanya memanggil fetchData
+  useEffect(() => {
     fetchData();
   }, []);
 
@@ -659,6 +652,59 @@ export default function BUSH4() {
       setRows((prev) =>
         prev.map((r) => (r.id === id ? { ...r, ...updates } : r))
       );
+    }
+  };
+
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  const handleRecalculateAllStatus = async () => {
+    try {
+      setIsRecalculating(true);
+      setNotification(null);
+
+      const { data: allRows, error } = await supabase
+        .from('mdr_tracking')
+        .select(
+          'id, doc_status, status_sm1, status_sm4, status_cs1, status_cs4, status_mw, status_pe'
+        );
+
+      if (error) throw error;
+
+      for (const row of allRows) {
+        const newPE = getStatusPE(
+          row.doc_status,
+          row.status_sm1,
+          row.status_sm4,
+          row.status_cs1,
+          row.status_cs4,
+          row.status_mw
+        );
+
+        if (newPE !== row.status_pe) {
+          const { error: updateError } = await supabase
+            .from('mdr_tracking')
+            .update({ status_pe: newPE })
+            .eq('id', row.id);
+
+          if (updateError) {
+            console.error(`❌ Error update row ${row.id}:`, updateError);
+          } else {
+            console.log(`✔ Updated row ${row.id}: ${row.status_pe} → ${newPE}`);
+          }
+        }
+      }
+
+      await fetchData(); // refresh tabel
+
+      // 🎯 Notifikasi berhasil
+      setNotification('✔ Status PE berhasil diperbarui!');
+      setTimeout(() => setNotification(null), 2000);
+    } catch (err) {
+      console.error('❌ Error saat recalculating:', err);
+      setNotification('⚠️ Gagal update status PE!');
+      setTimeout(() => setNotification(null), 2500);
+    } finally {
+      setIsRecalculating(false);
     }
   };
 
@@ -983,6 +1029,37 @@ export default function BUSH4() {
             ]}
             className="border rounded px-1 py-1 text-[11px]  font-normal  hover:bg-gray-50 shadow w-[80px]"
           />
+
+          <button
+            onClick={handleRecalculateAllStatus}
+            disabled={isRecalculating}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded shadow  text-[11px]"
+          >
+            {isRecalculating ? (
+              <div className="flex items-center gap-2">
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="white"
+                    strokeWidth="4"
+                    fill="none"
+                    opacity="0.25"
+                  ></circle>
+                  <path
+                    d="M12 2a10 10 0 0 1 10 10"
+                    stroke="white"
+                    strokeWidth="4"
+                    fill="none"
+                  ></path>
+                </svg>
+                Updating...
+              </div>
+            ) : (
+              'Refresh Status'
+            )}
+          </button>
         </div>
 
         {/* 🧊 Ini pembungkus baru untuk freeze header */}
@@ -1037,8 +1114,8 @@ export default function BUSH4() {
                     <td
                       key={key}
                       className={`border px-1 py-1 ${columnWidths[key] || ''} ${
-                        key === 'description'
-                          ? 'text-left  break-words whitespace-normal'
+                        key === 'description' || key === 'tracking_sp'
+                          ? 'text-left break-words whitespace-normal'
                           : 'text-center'
                       }`}
                     >
@@ -1255,19 +1332,34 @@ export default function BUSH4() {
                               }
                             `}
                         />
-                      ) : TEXT_INPUT_COLUMNS.includes(key) ? (
-                        <input
-                          type="text"
-                          maxLength={100}
-                          value={
-                            editingValue[`${row.id}_${key}`] ?? row[key] ?? ''
-                          }
-                          onChange={(e) =>
-                            handleChange(row.id, key, e.target.value)
-                          }
-                          onBlur={() => handleBlur(row.id, key)}
-                          className="border px-0.5 py-0.5 rounded w-full text-[11px] "
-                        />
+                      ) : key === 'remark' ? (
+                        <div className="relative w-[200px]">
+                          <input
+                            type="text"
+                            value={tempRemark[row.id] ?? row[key] ?? ''}
+                            onChange={(e) =>
+                              setTempRemark((prev) => ({
+                                ...prev,
+                                [row.id]: e.target.value,
+                              }))
+                            }
+                            onBlur={() =>
+                              handleUpdate(
+                                row.id,
+                                key,
+                                tempRemark[row.id] ?? ''
+                              )
+                            }
+                            placeholder="Select or type..."
+                            className="border px-1 py-0.5 rounded text-[11px] w-full"
+                            list={`remark_list_${row.id}`}
+                          />
+                          <datalist id={`remark_list_${row.id}`}>
+                            {REMARK_OPTIONS.map((option) => (
+                              <option key={option} value={option} />
+                            ))}
+                          </datalist>
+                        </div>
                       ) : key === 'doc_status' ? (
                         <CustomSelect
                           value={row[key] || ''}
