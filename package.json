@@ -9,6 +9,7 @@
     "@supabase/supabase-js": "^2.50.3",
     "dayjs": "^1.11.13",
     "lucide": "^0.525.0",
+    "lucide-react": "^0.562.0",
     "pdfmake": "^0.2.20",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

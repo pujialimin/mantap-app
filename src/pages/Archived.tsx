@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import * as XLSX from 'xlsx';
+import { X } from "lucide-react";
+
 
 type Row = {
   id: string;
