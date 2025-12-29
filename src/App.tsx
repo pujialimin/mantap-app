@@ -97,14 +97,14 @@ function MainLayout() {
         return (
           <span className="flex items-center space-x-2">
             <GiHotMeal className="w-5 h-5 text-white" />
-            <span>Daily Menu TBR BUSH4</span>
+            <span>Daily Menu TJK BUSH4</span>
           </span>
         );
       case '/daily-menu/ws1':
         return (
           <span className="flex items-center space-x-2">
             <GiHotMeal className="w-5 h-5 text-white" />
-            <span>Daily Menu TBR WS 1</span>
+            <span>Daily Menu TCR WS 1</span>
           </span>
         );
       case '/archived':

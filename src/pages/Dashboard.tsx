@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '../supabaseClient';
 import * as XLSX from 'xlsx';
 import CustomSelect from '../components/CustomSelect';
@@ -16,22 +16,9 @@ type Row = {
 
 const DOC_STATUS_OPTIONS = [
   '🔴NEED RO',
-  '🔴WAIT.REMOVE',
-  '🔴WAIT.BDP',
   '🟢COMPLETED',
-  '🟢DONE BY SOA',
   '🟡RO DONE',
-  '🟡EVALUATED',
-  '🟡CONTACT OEM',
-  '🟡HOLD',
-  '🟡RESTAMP',
-  '🟡REVISION',
-  '🔘REPLACE',
-  '🔘NOT TBR',
-  '🔘COVER BY',
-  '🔘TJK ITEM',
   '🔘CANCEL',
-  '🔘ROBBING',
 ];
 
 // Array status doc_status
@@ -117,18 +104,15 @@ const COLUMN_ORDER: { key: string; label: string }[] = [
   { key: 'status_job', label: 'Status Job' },
   { key: 'priority', label: 'Priority' },
   { key: 'remark', label: 'Remark' },
-  { key: 'status_sm1', label: 'W301' },
+  { key: 'status_sm4', label: 'Sheetmetal' },
 
-  { key: 'status_cs1', label: 'W302' },
-  { key: 'status_mw', label: 'W303' },
-  { key: 'status_sm4', label: 'W304' },
-  { key: 'status_cs4', label: 'W305' },
+  { key: 'status_cs4', label: 'Composite' },
+
+  { key: 'other', label: 'Machining' },
   { key: 'nd', label: 'NDT' },
-  { key: 'tjo', label: 'TJO' },
-  { key: 'other', label: 'TV/TC' },
-  { key: 'sp', label: 'SP' },
-  { key: 'loc_doc', label: 'Loc Doc/Part' },
-  { key: 'date_out', label: 'Date Out' },
+  { key: 'status_job', label: 'Status Job' },
+
+  { key: 'tracking_sp', label: 'Tracking SP' },
 ];
 
 type ToggleProps = {
@@ -924,6 +908,49 @@ export default function BUSH4() {
     0
   );
 
+  ///////////////////
+  const ALLOWED_REMARKS = [
+    'WAITING REMOVE',
+    'WAITING MATERIAL',
+    'EVALUATED',
+    'NOT PRINTED YET',
+    'CONTACT OEM',
+    'HOLD',
+    'RESTAMP',
+    'REVISION',
+    'DONE BY SOA',
+    'REPLACE',
+    'COVER BY',
+    'ROBBING',
+  ];
+
+  const remarkCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+
+    // pastikan semua remark muncul walau 0
+    ALLOWED_REMARKS.forEach((r) => {
+      counts[r] = 0;
+    });
+
+    // ⚠️ PENTING: pakai rows, BUKAN displayedRows / filteredRowsUI
+    rows.forEach((row) => {
+      const rawRemark = (row.remark || '').toUpperCase();
+
+      ALLOWED_REMARKS.forEach((allowed) => {
+        if (rawRemark.includes(allowed)) {
+          counts[allowed] += 1;
+        }
+      });
+    });
+
+    return Object.entries(counts).map(([name, value]) => ({
+      name,
+      value,
+    }));
+  }, [rows]);
+
+  const totalRemark = remarkCounts.reduce((acc, d) => acc + d.value, 0);
+
   ///////////////
 
   const chartData = [
@@ -934,15 +961,18 @@ export default function BUSH4() {
   ];
 
   // kotak status job
-  const statusCounts = filteredRows.reduce(
-    (acc, row) => {
-      if (row.status_job === 'OPEN') acc.OPEN++;
-      if (row.status_job === 'PROGRESS') acc.PROGRESS++;
-      if (row.status_job === 'CLOSED') acc.CLOSED++;
-      return acc;
-    },
-    { OPEN: 0, PROGRESS: 0, CLOSED: 0 }
-  );
+  const statusCounts = useMemo(() => {
+    return filteredRows.reduce(
+      (acc, row) => {
+        if (row.status_job === 'OPEN') acc.OPEN++;
+        else if (row.status_job === 'PROGRESS') acc.PROGRESS++;
+        else if (row.status_job === 'CLOSED') acc.CLOSED++;
+        return acc;
+      },
+      { OPEN: 0, PROGRESS: 0, CLOSED: 0 }
+    );
+  }, [filteredRows]);
+
   //
 
   return (
@@ -952,28 +982,16 @@ export default function BUSH4() {
         <div className="flex flex-col md:flex-row gap-4 w-full items-start mb-3">
           {/* 🔹 Kiri: Dua box sejajar (Status + Priority) */}
           <div className="flex flex-col md:flex-row gap-3 flex-wrap w-full md:w-auto max-w-[820px]">
-            {/* STATUS DOCUMENT */}
+            {/* STATUS DOCUMENT (berdasarkan REMARK) */}
             <div className="flex flex-col border rounded-[10px] shadow min-w-[230px] max-w-[350px] h-[187px]">
               {/* Header */}
               <div className="flex justify-between items-center w-full px-4 bg-[#7864bc] rounded-t-[10px]">
                 <h3 className="text-white py-0 font-bold">STATUS DOCUMENT</h3>
-                <span className="text-sm font-bold text-white">
-                  {(
-                    (docStatusCounts
-                      .filter(
-                        (d) => d.name.includes('🟢') || d.name.includes('🟘')
-                      )
-                      .reduce((acc, d) => acc + d.value, 0) /
-                      (totalDocStatus || 1)) *
-                    100
-                  ).toFixed(0)}
-                  %
-                </span>
               </div>
 
               {/* List */}
               <ul className="w-full max-h-full overflow-y-auto text-xs divide-y divide-gray-200">
-                {docStatusCounts.map((entry, index) => (
+                {remarkCounts.map((entry, index) => (
                   <li
                     key={index}
                     className="flex justify-between items-center px-2 py-1"
@@ -1059,23 +1077,6 @@ export default function BUSH4() {
           <div className="flex flex-col flex-1 gap-3 ">
             {/* Baris 1: Kotak Status */}
             <div className="flex flex-wrap gap-3 ">
-              {/* PERCENTAGE */}
-              <div className="border rounded-[10px] overflow-hidden text-center w-[125px] h-14 shadow flex-1  min-w-fit max-w-[200px]">
-                <div className="bg-blue-500 text-white py-0 font-bold">
-                  PERCENT
-                </div>
-                <div className="bg-white text-blue-500 text-lg font-bold py-0 text-center">
-                  {(
-                    (statusCounts.CLOSED /
-                      (statusCounts.OPEN +
-                        statusCounts.PROGRESS +
-                        statusCounts.CLOSED || 1)) *
-                    100
-                  ).toFixed(0)}
-                  %
-                </div>
-              </div>
-
               {/* OPEN */}
               <div className="border rounded-[10px] overflow-hidden text-center w-[125px] h-14 shadow flex-1  min-w-fit max-w-[200px]">
                 <div className="bg-red-500 text-white py-0 font-bold">OPEN</div>
@@ -1103,147 +1104,45 @@ export default function BUSH4() {
                   {statusCounts.CLOSED}
                 </div>
               </div>
-
-              {/* TOTAL */}
-              <div className="border rounded-[10px] overflow-hidden text-center w-[125px] h-14 shadow flex-1 min-w-fit max-w-[200px]">
-                <div className="bg-[#e36b45] text-white py-0 font-bold">
-                  TOTAL
-                </div>
-                <div className="bg-white text-gray-700 text-lg font-bold py-0 text-center">
-                  {statusCounts.OPEN +
-                    statusCounts.PROGRESS +
-                    statusCounts.CLOSED}
-                </div>
-              </div>
             </div>
 
             {/* Baris 2: Chart Status W301-W305 */}
-            <div className="flex flex-wrap gap-3">
-              {/* Status W301 */}
-              <div className="flex flex-col items-center border py-2 px-2 rounded-[10px] w-[125px] shadow flex-1 min-w-fit max-w-[200px]">
-                <h3 className="text-xs font-bold text-gray-700 mb-1">
-                  SHEETMETAL WS1
-                </h3>
-                <PieChart width={94} height={80}>
-                  <Pie
-                    data={chartDataSm1}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={20}
-                    outerRadius={40}
-                    paddingAngle={2}
-                  >
-                    {chartDataSm1.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                    <Label
-                      value={`${closedPercentageSm1}%`}
-                      position="center"
-                      style={{
-                        fontSize: '14px',
-                        fontWeight: 'bold',
-                        fill: '#374151',
-                      }}
-                    />
-                  </Pie>
-                  <Tooltip
-                    formatter={(value: number, name: string) => [
-                      `${value}`,
-                      `${name}`,
-                    ]}
-                    itemStyle={{ fontSize: '11px' }}
-                  />
-                </PieChart>
+            <div className="flex gap-3 items-start">
+              {/* KIRI: TOTAL + PERCENT (atas-bawah) */}
+              <div className="flex flex-col gap-2">
+                {/* TOTAL */}
+                <div className="border rounded-[10px] overflow-hidden text-center w-[200px] h-14 shadow flex-1 min-w-fit max-w-[200px]">
+                  <div className="bg-[#e36b45] text-white py-0 font-bold">
+                    TOTAL
+                  </div>
+                  <div className="bg-white text-gray-700 text-lg font-bold py-0 text-center">
+                    {statusCounts.OPEN +
+                      statusCounts.PROGRESS +
+                      statusCounts.CLOSED}
+                  </div>
+                </div>
+                {/* PERCENTAGE */}
+                <div className="border rounded-[10px] overflow-hidden text-center w-[200px] h-14 shadow flex-1  min-w-fit max-w-[200px]">
+                  <div className="bg-blue-500 text-white py-0 font-bold">
+                    PERCENT
+                  </div>
+                  <div className="bg-white text-blue-500 text-lg font-bold py-0 text-center">
+                    {(
+                      (statusCounts.CLOSED /
+                        (statusCounts.OPEN +
+                          statusCounts.PROGRESS +
+                          statusCounts.CLOSED || 1)) *
+                      100
+                    ).toFixed(0)}
+                    %
+                  </div>
+                </div>
               </div>
 
+              {/* KANAN: Pie Chart */}
               <div className="flex flex-col items-center border py-2 px-2 rounded-[10px] w-[125px] shadow flex-1 min-w-fit max-w-[200px]">
-                {/* chart Status W302 */}
                 <h3 className="text-xs font-bold text-gray-700 mb-1">
-                  COMPOSITE WS1
-                </h3>
-
-                <PieChart width={90} height={80}>
-                  <Pie
-                    data={chartDataCs1}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={20}
-                    outerRadius={40}
-                    paddingAngle={2}
-                  >
-                    {chartDataCs1.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                    {/* Label di tengah donut */}
-                    <Label
-                      value={`${closedPercentageCs1}%`}
-                      position="center"
-                      style={{
-                        fontSize: '14px',
-                        fontWeight: 'bold',
-                        fill: '#374151', // abu tua
-                      }}
-                    />
-                  </Pie>
-                  <Tooltip
-                    formatter={(value: number, name: string) => [
-                      `${value}`,
-                      `${name}`,
-                    ]}
-                    itemStyle={{ fontSize: '11px' }}
-                  />
-                </PieChart>
-              </div>
-
-              <div className="flex flex-col items-center border py-2 px-2 rounded-[10px] w-[125px] shadow flex-1 min-w-fit max-w-[200px]">
-                {/* chart Status W303 */}
-                <h3 className="text-xs font-bold text-gray-700 mb-1">
-                  MACHINING WS1
-                </h3>
-
-                <PieChart width={90} height={80}>
-                  <Pie
-                    data={chartDataMw}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={20}
-                    outerRadius={40}
-                    paddingAngle={2}
-                  >
-                    {chartDataCs1.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                    {/* Label di tengah donut */}
-                    <Label
-                      value={`${closedPercentageMw}%`}
-                      position="center"
-                      style={{
-                        fontSize: '14px',
-                        fontWeight: 'bold',
-                        fill: '#374151', // abu tua
-                      }}
-                    />
-                  </Pie>
-                  <Tooltip
-                    formatter={(value: number, name: string) => [
-                      `${value}`,
-                      `${name}`,
-                    ]}
-                    itemStyle={{ fontSize: '11px' }}
-                  />
-                </PieChart>
-              </div>
-
-              <div className="flex flex-col items-center border py-2 px-2 rounded-[10px] w-[125px] shadow flex-1 min-w-fit max-w-[200px]">
-                {/* chart Status W304 */}
-                <h3 className="text-xs font-bold text-gray-700 mb-1">
-                  SHEETMETAL H4
+                  SHEETMETAL
                 </h3>
 
                 <PieChart width={90} height={80}>
@@ -1284,7 +1183,7 @@ export default function BUSH4() {
               <div className="flex flex-col items-center border py-2 px-2 rounded-[10px] w-[125px] shadow flex-1 min-w-fit max-w-[200px]">
                 {/* chart Status W305 */}
                 <h3 className="text-xs font-bold text-gray-700 mb-1">
-                  COMPOSITE H4
+                  COMPOSITE
                 </h3>
 
                 <PieChart width={90} height={80}>
@@ -1496,16 +1395,6 @@ export default function BUSH4() {
               )}
             </div>
           </div>
-          <CustomSelect
-            value={filterBase}
-            onChange={(e) => setFilterBase(e.target.value)}
-            options={[
-              { label: 'All Base', value: '' },
-              { label: 'Workshop 1', value: 'Workshop 1' },
-              { label: 'Hangar 4', value: 'Hangar 4' },
-            ]}
-            className="border rounded px-1 py-1 text-[11px] hover:bg-gray-50 shadow w-[100px]"
-          />
 
           <CustomSelect
             value={filterPriority}
@@ -1536,9 +1425,6 @@ export default function BUSH4() {
             onChange={(e) => setFilterW(e.target.value)}
             options={[
               { label: 'All Wrkctr', value: '' },
-              { label: 'W301', value: 'W301' },
-              { label: 'W302', value: 'W302' },
-              { label: 'W303', value: 'W303' },
               { label: 'W304', value: 'W304' },
               { label: 'W305', value: 'W305' },
             ]}

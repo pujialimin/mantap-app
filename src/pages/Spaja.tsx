@@ -13,16 +13,12 @@ type Row = {
   [key: string]: any;
 };
 
-const SENT_BY_OPTIONS = ['H4 TBR1', 'WS1 TBR2'];
+const SENT_BY_OPTIONS = ['TJK BUSH4', 'TCR MACHINING'];
 
 const PACKED_BY_OPTIONS = [
   '9726460/ARIEF',
   '9726468/FARIS',
   '581235/SURYA',
-  '581809/AFIF',
-  '581822/JEFRI.Y',
-  '581856/PUJI ALI',
-  '582973/AFRI',
   '582980/LUKMAN',
   '582984/JODIE.S',
   '583486/JEFRI.L',

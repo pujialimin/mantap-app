@@ -27,17 +27,17 @@ const menuItems = [
 ];
 
 const dailyReportSubmenu = [
-  { label: 'W301', path: '/daily-report/w301' },
-  { label: 'W302', path: '/daily-report/w302' },
-  { label: 'W303', path: '/daily-report/w303' },
-  { label: 'W304', path: '/daily-report/w304' },
-  { label: 'W305', path: '/daily-report/w305' },
+  { label: 'TJK SHEETMETAL', path: '/daily-report/w304' },
+  { label: 'TJK COMPOSITE', path: '/daily-report/w305' },
+  
+  { label: 'TCR MACHINING', path: '/daily-report/w303' },
 ];
 
 const dailyMenuSubmenu = [
-  { label: 'TBR BUSH4', path: '/daily-menu/bush4' },
-  { label: 'TBR WS1', path: '/daily-menu/ws1' },
-  { label: 'TBR Archived', path: '/archived' },
+  { label: 'TJK BUSH4', path: '/daily-menu/bush4' },
+  
+  { label: 'TCR MACHINING', path: '/daily-menu/WS1' },
+  { label: 'Archived', path: '/archived' },
 ];
 
 export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
