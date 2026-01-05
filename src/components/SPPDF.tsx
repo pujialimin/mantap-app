@@ -9,6 +9,7 @@ import {
 } from '@react-pdf/renderer';
 import { Font } from '@react-pdf/renderer';
 import LibreBarcode128 from '../assets/Free3of9Extended.ttf';
+import logo from '../assets/gmf.png';
 
 Font.register({
   family: 'Barcode128',
@@ -172,12 +173,16 @@ const ShippingCopy = ({ data, sentBy, packedBy, toUnit }: any) => {
       {/* HEADER */}
       <View style={[styles.headerContainer, { marginTop: -15 }]}>
         {/* LEFT */}
-        <View style={styles.leftHeader}>
-          <Image
-            src="/public/gmf.png"
-            style={{ width: 170, height: 'auto', marginLeft: 15 }} // ubah ukuran sesuai kebutuhan
-          />
-        </View>
+        <View>
+  <View style={[styles.headerContainer, { marginTop: -15 }]}>
+    <View style={styles.leftHeader}>
+      <Image
+        src={logo}
+        style={{ width: 170, marginLeft: 15 }}
+      />
+    </View>
+  </View>
+</View>
 
         {/* RIGHT */}
         <View style={styles.rightHeader}>
