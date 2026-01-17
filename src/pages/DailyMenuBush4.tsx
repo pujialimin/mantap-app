@@ -81,7 +81,6 @@ const COLUMN_ORDER: { key: string; label: string }[] = [
   { key: 'ac_reg', label: 'A/C Reg' },
   { key: 'order', label: 'Order' },
   { key: 'description', label: 'Description' },
-  { key: 'plntwkcntr', label: 'Plnt' },
   { key: 'doc_type', label: 'Doc' },
   { key: 'location', label: 'Location' },
   { key: 'date_in', label: 'Date In' },

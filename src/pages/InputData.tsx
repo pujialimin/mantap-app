@@ -16,7 +16,6 @@ const getStatusPE = (doc_status: string): string => {
   const progressStatus = [
     
     '🟡EVALUATED',
-    
     '🟡CONTACT OEM',
     '🟡HOLD',
     '🟡RESTAMP',
@@ -70,7 +69,6 @@ const emptyRow = {
   ac_reg: '',
   order: null as number | null, // biar sesuai integer
   description: '',
-  plntwkcntr: '',
   doc_type: '',
   location: '',
   doc_status: '',
@@ -81,7 +79,6 @@ const FIELD_ORDER = [
    'ac_reg',
   'order',
   'description',
-  'plntwkcntr',
   'doc_type',
   'location',
   'doc_status',
@@ -134,7 +131,7 @@ const [openLocation, setOpenLocation] = useState(false);
     setLoading(true);
     setMessage('');
   
-    const requiredKeys = ['ac_reg', 'order', 'description', 'plntwkcntr', 'doc_type', 'doc_status'];
+    const requiredKeys = ['ac_reg', 'order', 'description',  'doc_type', 'doc_status'];
   
     // 🔎 Validasi
     for (let i = 0; i < forms.length; i++) {
@@ -247,11 +244,10 @@ console.log("Existing orders:", existingOrders);
         ac_reg: cells[0] || '',
         order: cells[1] ? Number(cells[1]) : null, // ✅ convert ke number/null
         description: cells[2] || '',
-        plntwkcntr: cells[3] || '',
-        doc_type: cells[4] || '',
-        location: cells[5] || '',
-        doc_status: cells[6] || '',
-        status_pe: getStatusPE(cells[6] || ''),
+        doc_type: cells[3] || '',
+        location: cells[4] || '',
+        doc_status: cells[5] || '',
+        status_pe: getStatusPE(cells[5] || ''),
       }));
   
       setForms(newForms); // ✅ langsung tampilkan hasil paste
@@ -339,37 +335,7 @@ console.log("Existing orders:", existingOrders);
             {/* Tombol Menu Dropdown */}
             <div className="flex gap-1 items-center">
 
-            {/* PLNTWKCNTR */}
-           <div className="relative inline-block text-left">
-        <button
-        onClick={() => {
-          setOpenPlntwkcntr(!openPlntwkcntr);
-          setOpenDocType(false);
-          setOpenDocStatus(false);
-        }}
-        className="inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-2 py-0.5 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50"
-      >
-        PlntWkCntr
-      </button>
-      {openPlntwkcntr && (
-        <div className="absolute z-10 bg-white border mt-1 rounded shadow">
-          {['CGK', 'GAH1', 'GAH2', 'GAH3', 'GAH4', 'WSSR', 'WSST'].map((item) => (
-            <button
-              key={item}
-              onClick={() => {
-                applyToAll('plntwkcntr', item);
-                setOpenPlntwkcntr(false);
-              }}
-              className="block w-full text-left px-4 py-1 hover:bg-gray-100 text-xs"
-              type="button"
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-
+           
 {/* DOC TYPE */}
 <div className="relative inline-block text-left">
           <button
@@ -478,7 +444,6 @@ console.log("Existing orders:", existingOrders);
                 <th className="border px-2 py-2">A/C Reg</th>
                 <th className="border px-2 py-2">Order</th>
                 <th className="border px-2 py-2">Description</th>
-                <th className="border px-2 py-2">PlntWkCntr</th>
                 <th className="border px-2 py-2">Doc Type</th>
                 <th className="border px-2 py-2">Location</th>
                 <th className="border px-2 py-2">Doc Status</th>
@@ -540,40 +505,6 @@ console.log("Existing orders:", existingOrders);
                       rows={2}
                       className="border rounded px-2 py-1 w-full"
                     />
-                  </td>
-
-         {/* PLNTWKCNTR */}
-         <td className="border px-2 py-1 min-w-[100px]">
-                    <select
-                      ref={(el) => {
-                        if (!inputRefs.current[index])
-                          inputRefs.current[index] = [];
-                        inputRefs.current[index][3] = el;
-                      }}
-                      name="plntwkcntr"
-                      value={row.plntwkcntr}
-                      onChange={(e) => handleChange(e, index)}
-                      onPaste={(e) => handlePasteCell(e, index, 'plntwkcntr')}
-                      className="border rounded px-2 py-1 w-full"
-                      required
-                    >
-                      <option value="" disabled>
-                        -- Pilih --
-                      </option>
-                      {[
-                        'CGK',
-                        'GAH1',
-                        'GAH2',
-                        'GAH3',
-                        'GAH4',
-                        'WSSR',
-                        'WSST',
-                      ].map((item) => (
-                        <option key={item} value={item}>
-                          {item}
-                        </option>
-                      ))}
-                    </select>
                   </td>
 
 
