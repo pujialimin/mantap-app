@@ -21,20 +21,19 @@ function NotificationBanner() {
 
       <p className="text-sm text-gray-800 font-medium">
         <strong>PERHATIAN:</strong> Aplikasi ini sekarang hanya bisa digunakan
-        oleh <span className="font-semibold">TJK BUSH4</span> dan{" "}
-        <span className="font-semibold">MACHINING</span>.
+        oleh <span className="font-semibold">TJK BUSH4</span>.
         <br />
-        Untuk tim <span className="font-semibold">TBK SHOP WS1</span>, silahkan
+        Untuk tim <span className="font-semibold">MACHINING/TCR WS1</span>, silahkan
         klik link di bawah.
       </p>
 
       <a
-        href="https://mntp-tbkshop.vercel.app"
+        href="https://mntp-tcr.vercel.app"
         target="_blank"
         rel="noopener noreferrer"
         className="inline-block mt-3 text-sm font-semibold text-white hover:underline"
       >
-        👉 Buka Aplikasi TBK SHOP WS1
+        👉 Buka Aplikasi mntp.tcr-vercel.app
       </a>
     </div>
   );

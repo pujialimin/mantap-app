@@ -30,13 +30,10 @@ const dailyReportSubmenu = [
   { label: 'TJK SHEETMETAL', path: '/daily-report/w304' },
   { label: 'TJK COMPOSITE', path: '/daily-report/w305' },
   
-  { label: 'TCR MACHINING', path: '/daily-report/w303' },
 ];
 
 const dailyMenuSubmenu = [
   { label: 'TJK BUSH4', path: '/daily-menu/bush4' },
-  
-  { label: 'TCR MACHINING', path: '/daily-menu/WS1' },
   { label: 'Archived', path: '/archived' },
 ];
 
