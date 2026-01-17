@@ -29,7 +29,6 @@ const menuItems = [
 const dailyReportSubmenu = [
   { label: 'TJK SHEETMETAL', path: '/daily-report/w304' },
   { label: 'TJK COMPOSITE', path: '/daily-report/w305' },
-  
 ];
 
 const dailyMenuSubmenu = [
