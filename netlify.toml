@@ -1,0 +1,5 @@
+[[redirects]]
+  from = "/supabase/*"
+  to = "https://kuzsjdtluabnfkzyffgz.supabase.co/:splat"
+  status = 200
+  force = true
