@@ -1,97 +1,159 @@
 // src/pages/Login.tsx
-import { useState } from 'react';
-import { supabase } from '../supabaseClient';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from "react";
 
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const navigate = useNavigate();
+  const [countdown, setCountdown] = useState(20);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          window.location.href = "https://mntp-gmf.netlify.app";
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      setError(error.message);
-    } else {
-      navigate('/'); // Ganti dengan halaman setelah login
-    }
-  };
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <div
       className="min-h-screen flex items-center justify-center bg-cover bg-center"
       style={{ backgroundImage: "url('/back.png')" }}
     >
-       <form
-  onSubmit={handleLogin}
-  className="
-    bg-slate-900/60             /* semi transparan gelap */
-    border border-white/10
-    shadow-lg shadow-cyan-500/50
-    rounded-xl
-    p-5 w-[300px] space-y-2
-    text-white
-  "
->
-  <h2 className="text-2xl font-bold text-center tracking-wide drop-shadow-lg">
-    Login
-  </h2>
+      <div
+        className="
+          w-[380px]
+          rounded-2xl
+          border border-white/20
+          bg-slate-900/75
+          backdrop-blur-md
+          shadow-2xl
+          shadow-cyan-500/30
+          p-8
+          text-white
+          text-center
+        "
+      >
 
-  <input
-    type="email"
-    placeholder="Email"
-    className="
-      w-full p-2 rounded-md
-      bg-white/20 border border-white/30
-      placeholder-white/70
-      focus:outline-none focus:ring-2 focus:ring-cyan-400
-      text-white
-    "
-    value={email}
-    onChange={(e) => setEmail(e.target.value)}
-    required
-  />
+        {/* Status Icon */}
+        <div className="flex justify-center mb-6">
+          <div
+            className="
+              w-20 h-20
+              rounded-full
+              bg-gradient-to-r
+              from-cyan-500
+              to-blue-600
+              flex
+              items-center
+              justify-center
+              shadow-lg
+              shadow-cyan-500/50
+              animate-pulse
+            "
+          >
+            <span className="text-4xl">
+              ✓
+            </span>
+          </div>
+        </div>
 
-  <input
-    type="password"
-    placeholder="Password"
-    className="
-      w-full p-2 rounded-md
-      bg-white/20 border border-white/30
-      placeholder-white/70
-      focus:outline-none focus:ring-2 focus:ring-cyan-400
-      text-white
-    "
-    value={password}
-    onChange={(e) => setPassword(e.target.value)}
-    required
-  />
 
-  {error && <p className="text-red-400 text-sm">{error}</p>}
+        <h1 className="text-2xl font-bold tracking-wide mb-3">
+          MNTP System Updated
+        </h1>
 
-  <button
-    type="submit"
-    className="
-      w-full p-2 rounded-md
-      bg-gradient-to-r from-cyan-500 to-blue-500
-      hover:from-blue-500 hover:to-cyan-500
-      shadow-md shadow-cyan-500/40
-      text-white font-semibold tracking-wide
-      transition duration-300
-    "
-  >
-    Sign In
-  </button>
-</form>
+
+        <div
+          className="
+            text-xs
+            uppercase
+            tracking-widest
+            text-cyan-300
+            mb-5
+          "
+        >
+          Migration Completed
+        </div>
+
+
+        <p className="text-sm text-white/80 leading-relaxed mb-6">
+          The previous MNTP platform has been moved to a new system address.
+          <br /><br />
+          Please continue using the latest version through the new link below.
+        </p>
+
+
+        <a
+          href="https://mntp-gmf.netlify.app"
+          className="
+            block
+            py-3
+            rounded-lg
+            bg-gradient-to-r
+            from-cyan-500
+            to-blue-500
+            hover:scale-105
+            transition
+            duration-300
+            font-semibold
+            shadow-lg
+            shadow-cyan-500/40
+          "
+        >
+          Access New MNTP
+        </a>
+
+
+        <div className="mt-6">
+
+          <div className="flex justify-center gap-1 mb-3">
+            {[1,2,3].map((item)=>(
+              <span
+                key={item}
+                className="
+                  w-2
+                  h-2
+                  bg-cyan-400
+                  rounded-full
+                  animate-bounce
+                "
+                style={{
+                  animationDelay:`${item * 150}ms`
+                }}
+              />
+            ))}
+          </div>
+
+
+          <p className="text-xs text-white/60">
+            Redirecting automatically in{" "}
+            <span className="text-cyan-300 font-bold">
+              {countdown}
+            </span>{" "}
+            seconds
+          </p>
+
+        </div>
+
+
+        <div
+          className="
+            mt-6
+            pt-4
+            border-t
+            border-white/10
+            text-[11px]
+            text-white/40
+          "
+        >
+          MNTP Platform Migration Notice
+        </div>
+
+      </div>
     </div>
   );
-  
 }
